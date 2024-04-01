@@ -9,7 +9,7 @@
 }
 .sticky-top.scrolled {
   border-bottom: 3px solid rgb(51, 8, 59);
-  background-color: aliceblue;
+  background-color: rgb(255, 255, 255);
 }
 .navbar-toggler-icon {
   filter: invert(1); /* makes the icon white */
