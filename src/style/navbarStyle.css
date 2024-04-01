@@ -24,14 +24,17 @@
 .button-scrolled {
   border: 1px solid black !important;
 }
-.navbar-brand {
+.navbar-text {
+  text-decoration: none;
+  margin-right: 2em;
   color: rgb(255, 255, 255) !important; /* makes the text white */
   transition: color 0.3s ease;
 }
 
-.brand-scrolled {
+.text-scrolled {
   color: rgb(0, 0, 0) !important; /* makes the text black */
 }
+
 
 .modal-dialog-centered {
     position: absolute;

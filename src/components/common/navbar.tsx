@@ -34,25 +34,27 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   useEffect(() => {
     const checkScroll = () => {
       const navbar = document.querySelector('.sticky-top');
-      const navbarBrand = document.querySelector('.navbar-brand');
+      const navbarText = document.querySelectorAll('.navbar-text');
       const buttonIcon = document.querySelector('.navbar-toggler-icon');
       const button = document.querySelector('.navbar-toggler');
-  
-      if (isMenuOpen || window.pageYOffset > 0 || (window.pageYOffset === 0 && isMenuOpen)) {
+
+      const isMobile = window.innerWidth <= 768;
+
+      if ((isMenuOpen && !isMobile) || window.pageYOffset > 0 || (window.pageYOffset === 0 && (isMenuOpen || isMobile))) {
         navbar?.classList.add('scrolled');
-        navbarBrand?.classList.add('brand-scrolled');
+        navbarText.forEach(element => element.classList.add('text-scrolled'));
         buttonIcon?.classList.add('icon-scrolled');
         button?.classList.add('button-scrolled');
       } else {
         navbar?.classList.remove('scrolled');
-        navbarBrand?.classList.remove('brand-scrolled');
+        navbarText.forEach(element => element.classList.remove('text-scrolled'));
         buttonIcon?.classList.remove('icon-scrolled');
         button?.classList.remove('button-scrolled');
       }
     };
-  
+
     window.addEventListener('scroll', checkScroll);
-  
+
     return () => {
       window.removeEventListener('scroll', checkScroll);
     };
@@ -69,13 +71,13 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
 
   const handleMenuToggle = () => {
     const navbar = document.querySelector('.sticky-top');
-    const navbarBrand = document.querySelector('.navbar-brand');
+    const navbarText = document.querySelectorAll('.navbar-text');
     const buttonIcon = document.querySelector('.navbar-toggler-icon');
     const button = document.querySelector('.navbar-toggler');
 
     if (window.pageYOffset === 0) {
       navbar?.classList.toggle('scrolled');
-      navbarBrand?.classList.toggle('brand-scrolled');
+      navbarText.forEach(element => element.classList.toggle('text-scrolled'));
       buttonIcon?.classList.toggle('icon-scrolled');
       button?.classList.toggle('button-scrolled');
     }
@@ -90,7 +92,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   return (
     <nav className={`navbar navbar-expand-lg navbar-light sticky-top${isMenuOpen ? ' scrolled' : ''}`}>
       <div className="container">
-        <Link className="navbar-brand" to="/">
+        <Link className={`navbar-text${isMenuOpen ? ' text-scrolled' : ''}`} to="/">
           SM Trend
         </Link>
         <div className="d-flex order-lg-2">
@@ -138,23 +140,24 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
         </button>
         <div className={`collapse navbar-collapse${isMenuOpen ? ' show' : ''}`} id="navbarNav">
           <ul className="navbar-nav">
-            <li className="nav-item">
-              <Link to="/" className="nav-link">
+            <li>
+              <Link to="/" className={`nav-link${isMenuOpen ? ' text-scrolled' : ''} nav-text navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>
                 Strona główna
               </Link>
             </li>
-            <li className="nav-item">
-              <Link to="/activeEvents" className="nav-link">
+            <li>
+              <Link to="/activeEvents" className={`nav-link${isMenuOpen ? ' text-scrolled' : ''} navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>
                 Top Trend
               </Link>
             </li>
-            <li className="nav-item">
-              <Link to="/contact" className="nav-link">
+            <li>
+              <Link to="/contact" className={`nav-link${isMenuOpen ? ' text-scrolled' : ''} navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>
                 Kontakt
               </Link>
             </li>
           </ul>
         </div>
+        
         <Modal
           isOpen={isModalOpen}
           onRequestClose={closeModal}
