@@ -1,0 +1,29 @@
+.carousel-bg{
+    background-color: brown;
+}
+.carousel{
+    width: 60%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+.slider-img{
+
+    aspect-ratio: 2.4 / 1;
+    margin-left: auto;
+    margin-right: auto;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+.slider-img img{
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+@media only screen and (max-width: 1281px) {
+    .carousel{
+        width: 90%;
+    }
+}
+
+
