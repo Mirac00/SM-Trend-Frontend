@@ -1,5 +1,3 @@
-// Navbar.tsx
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
@@ -8,7 +6,6 @@ import { User } from '../../models/User';
 import Modal from 'react-modal';
 import Login from './Login';
 import Register from './Register';
-import '../../style/navbarStyle.css';
 import { UserService } from '../../services/UserService';
 
 interface NavbarProps {
@@ -20,6 +17,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -33,6 +31,33 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
     checkUser();
   }, [setUser]);
 
+  useEffect(() => {
+    const checkScroll = () => {
+      const navbar = document.querySelector('.sticky-top');
+      const navbarBrand = document.querySelector('.navbar-brand');
+      const buttonIcon = document.querySelector('.navbar-toggler-icon');
+      const button = document.querySelector('.navbar-toggler');
+  
+      if (isMenuOpen || window.pageYOffset > 0 || (window.pageYOffset === 0 && isMenuOpen)) {
+        navbar?.classList.add('scrolled');
+        navbarBrand?.classList.add('brand-scrolled');
+        buttonIcon?.classList.add('icon-scrolled');
+        button?.classList.add('button-scrolled');
+      } else {
+        navbar?.classList.remove('scrolled');
+        navbarBrand?.classList.remove('brand-scrolled');
+        buttonIcon?.classList.remove('icon-scrolled');
+        button?.classList.remove('button-scrolled');
+      }
+    };
+  
+    window.addEventListener('scroll', checkScroll);
+  
+    return () => {
+      window.removeEventListener('scroll', checkScroll);
+    };
+  }, [isMenuOpen]);
+
   const handleLogout = () => {
     window.localStorage.removeItem('jwt');
     setUser(null);
@@ -42,12 +67,28 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
     setIsModalOpen(false);
   };
 
+  const handleMenuToggle = () => {
+    const navbar = document.querySelector('.sticky-top');
+    const navbarBrand = document.querySelector('.navbar-brand');
+    const buttonIcon = document.querySelector('.navbar-toggler-icon');
+    const button = document.querySelector('.navbar-toggler');
+
+    if (window.pageYOffset === 0) {
+      navbar?.classList.toggle('scrolled');
+      navbarBrand?.classList.toggle('brand-scrolled');
+      buttonIcon?.classList.toggle('icon-scrolled');
+      button?.classList.toggle('button-scrolled');
+    }
+
+    setIsMenuOpen(!isMenuOpen);
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+    <nav className={`navbar navbar-expand-lg navbar-light sticky-top${isMenuOpen ? ' scrolled' : ''}`}>
       <div className="container">
         <Link className="navbar-brand" to="/">
           SM Trend
@@ -91,10 +132,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
           aria-controls="navbarNav"
           aria-expanded="false"
           aria-label="Toggle navigation"
+          onClick={handleMenuToggle}
         >
           <span className="navbar-toggler-icon"></span>
         </button>
-        <div className="collapse navbar-collapse" id="navbarNav">
+        <div className={`collapse navbar-collapse${isMenuOpen ? ' show' : ''}`} id="navbarNav">
           <ul className="navbar-nav">
             <li className="nav-item">
               <Link to="/" className="nav-link">

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Carousel from 'react-bootstrap/Carousel';
 import '../../style/sliderStyle.css';
-import Image1 from '../../images/1eko.jpg';
+import Image1 from '../../images/img1.png';
 import Image2 from '../../images/2eko.jpg';
 import Image3 from '../../images/3eko.jpg';
 import Image4 from '../../images/4eko.jpg';
@@ -17,19 +17,22 @@ const Slider: React.FC = () => {
   };
 
   return (
-    <div className='carousel-bg'>
-    <Carousel activeIndex={index} onSelect={handleSelect} interval={5000} indicators={true} controls={true} >
-      {images.map((image, i) => (
-        <Carousel.Item key={i}>
+<div className='carousel-bg'>
+  <Carousel activeIndex={index} onSelect={handleSelect} interval={5000} indicators={true} controls={true} >
+    {images.map((image, i) => (
+      <Carousel.Item key={i} >
+        <div className="slider-img">
           <img
-            className="d-block w-100 slider-img"
             src={image}
             alt={`Slide ${i}`}
+            className="centered-img"
           />
-        </Carousel.Item>
-      ))}
-    </Carousel>
-    </div>
+        </div>
+      </Carousel.Item>
+    ))}
+  </Carousel>
+</div>
+
   );
 };
 

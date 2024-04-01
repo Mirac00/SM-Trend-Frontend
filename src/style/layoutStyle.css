@@ -1,11 +1,8 @@
 main {
     flex: 1; 
-    background-image: url('E:\Repozytorium GitHUB\EkoProject\my-app\src\images\bgAll.jpg'); 
+    background-color: white;
     background-size: cover; 
     background-repeat: no-repeat; 
     background-position: center;
     background-attachment: fixed;
-}
-header{
-    margin-bottom: 2.7em;
 }

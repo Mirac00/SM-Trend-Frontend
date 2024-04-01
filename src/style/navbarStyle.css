@@ -3,8 +3,36 @@
     top: 0;
     width: 100%;
     z-index: 1030;
-    border-bottom: 3px solid green;
 }
+.sticky-top {
+  transition: background-color 0.3s ease, border-bottom 0.3s ease;
+}
+.sticky-top.scrolled {
+  border-bottom: 3px solid rgb(51, 8, 59);
+  background-color: aliceblue;
+}
+.navbar-toggler-icon {
+  filter: invert(1); /* makes the icon white */
+}
+
+.icon-scrolled {
+  filter: invert(0); /* makes the icon black */
+}
+.navbar-toggler {
+  border: 1px solid white !important;
+}
+.button-scrolled {
+  border: 1px solid black !important;
+}
+.navbar-brand {
+  color: rgb(255, 255, 255) !important; /* makes the text white */
+  transition: color 0.3s ease;
+}
+
+.brand-scrolled {
+  color: rgb(0, 0, 0) !important; /* makes the text black */
+}
+
 .modal-dialog-centered {
     position: absolute;
     top: 50%;
