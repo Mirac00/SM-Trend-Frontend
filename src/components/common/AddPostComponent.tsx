@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AddPostService } from '../../services/AddPostService';
+import '../../style/AddPostComponent.css';
 
 interface AddPostComponentProps {
   onPostAdded: () => void;
@@ -35,7 +36,7 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
   };
 
   return (
-    <div className="mb-3 bg-white p-3 border border-2 border-dark rounded">
+    <div className="mb-3 bg-white p-3 border border-2 border-dark rounded add-post">
       <h3>Dodaj post</h3>
       <form>
         <div className="mb-3">

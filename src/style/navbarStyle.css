@@ -20,22 +20,65 @@
 }
 .navbar-toggler {
   border: 1px solid white !important;
+  transition: background-color 0.3s ease;
+}
+.navbar-toggler:hover {
+ background-color: blueviolet;
+ transition: background-color 0.3s ease;
 }
 .button-scrolled {
   border: 1px solid black !important;
 }
 .navbar-text {
   text-decoration: none;
-  margin-right: 2em;
   color: rgb(255, 255, 255) !important; /* makes the text white */
-  transition: color 0.3s ease;
 }
-
+.btn-text{ 
+  transition: color 0.3s ease;
+  margin:0 2em 0 2em;
+  padding: 1em;
+  transition: background-color 0.3s ease;
+}
+.btn-text:hover {
+  background-color:blueviolet;
+  border-radius: 10px;
+  transition: background-color 0.3s ease;
+}
+.navbar-btn{
+  background:none;
+  border: 1px solid rgb(255, 255, 255);
+  transition: background-color 0.3s ease;
+}
+.btn-scrolled{
+  border: 1px solid black !important;
+  background-color: blueviolet !important;
+  transition: background-color 0.3s ease !important;
+}
+.btn-scrolled:hover{
+  color: black ;
+  background:none !important;
+  transition: background-color 0.3s ease !important;
+}
 .text-scrolled {
   color: rgb(0, 0, 0) !important; /* makes the text black */
 }
-
-
+.navbar-toggler:focus {
+box-shadow: none !important;
+}
+.btn-user{
+  color: white;
+  background:none;
+  border: 1px solid rgb(255, 255, 255);
+  margin: 4px;
+  padding: 8px;
+  font-size: 1em;
+  border-radius: 10px;
+  transition: background-color 0.3s ease;
+}
+.btn-user:hover{
+background-color: blueviolet;
+transition: background-color 0.3s ease;
+}
 .modal-dialog-centered {
     position: absolute;
     top: 50%;

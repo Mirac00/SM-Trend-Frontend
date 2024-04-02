@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import Carousel from 'react-bootstrap/Carousel';
 import '../../style/sliderStyle.css';
 import Image1 from '../../images/img1.png';
-import Image2 from '../../images/2eko.jpg';
-import Image3 from '../../images/3eko.jpg';
-import Image4 from '../../images/4eko.jpg';
-import Image5 from '../../images/5eko.png';
+import Image2 from '../../images/img2.png';
+import Image3 from '../../images/img3.png';
+import Image4 from '../../images/img4.png';
+import Image5 from '../../images/img5.png';
 
 const images = [Image1, Image2, Image3, Image4, Image5];
 
