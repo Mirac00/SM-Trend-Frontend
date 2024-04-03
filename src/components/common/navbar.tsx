@@ -196,7 +196,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
         </Modal>
 
         {isSessionExpired && (
-          <div className="popup popup-ssesion-over">
+          <div className="popup bg-white p-3 border border-dark rounded text-center mx-auto">
             <div className="popup-inner ">
               <p>Twoja sesja wygasła. Zaloguj się ponownie.</p>
               <button onClick={() => setIsSessionExpired(false)} className="close-popup">&#10006;</button>
