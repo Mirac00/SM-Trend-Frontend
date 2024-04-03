@@ -22,13 +22,24 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   useEffect(() => {
     const checkUser = async () => {
       const jwt = window.localStorage.getItem('jwt');
-      if (jwt) {
+      if (!jwt) {
+        // Brak tokenu JWT, więc wyloguj użytkownika
+        setUser(null);
+      } else {
         const user: User | null = await UserService.getUserByToken(jwt);
         setUser(user);
       }
       setIsLoading(false);
     };
+
     checkUser();
+
+    // Nasłuchuj zmian w LocalStorage
+    window.addEventListener('storage', checkUser);
+
+    return () => {
+      window.removeEventListener('storage', checkUser);
+    };
   }, [setUser]);
 
   useEffect(() => {
