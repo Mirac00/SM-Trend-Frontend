@@ -29,6 +29,11 @@
 .button-scrolled {
   border: 1px solid black !important;
 }
+.popup-ssesion-ove{
+  background-color: white;
+  padding: 1em;
+  border: 1 px solid black;
+}
 .navbar-text {
   text-decoration: none;
   color: rgb(255, 255, 255) !important; /* makes the text white */

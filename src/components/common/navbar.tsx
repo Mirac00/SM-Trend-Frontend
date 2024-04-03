@@ -18,13 +18,14 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   const [modalContent, setModalContent] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSessionExpired, setIsSessionExpired] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
       const jwt = window.localStorage.getItem('jwt');
       if (!jwt) {
-        // Brak tokenu JWT, więc wyloguj użytkownika
         setUser(null);
+        setIsSessionExpired(true);
       } else {
         const user: User | null = await UserService.getUserByToken(jwt);
         setUser(user);
@@ -34,7 +35,6 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
 
     checkUser();
 
-    // Nasłuchuj zmian w LocalStorage
     window.addEventListener('storage', checkUser);
 
     return () => {
@@ -76,6 +76,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   const handleLogout = () => {
     window.localStorage.removeItem('jwt');
     setUser(null);
+    setIsSessionExpired(false);
   };
 
   const closeModal = () => {
@@ -193,6 +194,15 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
             )}
           </div>
         </Modal>
+
+        {isSessionExpired && (
+          <div className="popup popup-ssesion-over">
+            <div className="popup-inner ">
+              <p>Twoja sesja wygasła. Zaloguj się ponownie.</p>
+              <button onClick={() => setIsSessionExpired(false)} className="close-popup">&#10006;</button>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
