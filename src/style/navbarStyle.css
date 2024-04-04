@@ -108,4 +108,9 @@ transition: background-color 0.3s ease;
     background-color: rgba(0, 0, 0, 0.5); /* Kolor tła */
     z-index: 1000; /* Upewnij się, że jest na wierzchu */
   }
-  
+  .popup-sesion-over{
+    position: absolute;
+    top: 4em;
+    right:3em;
+    left: 3em;
+  }
