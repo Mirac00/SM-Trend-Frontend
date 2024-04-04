@@ -114,7 +114,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
         <div className="d-flex order-lg-2 text-white ">
           {user ? (
             <>
-              <span className="d-flex align-items-center fs-5 me-3">Witaj: {user.username}</span>
+              <span className={`d-flex align-items-center fs-5 me-3 navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>Witaj: {user.username}</span>
               <button className={`btn-user navbar-btn ${isMenuOpen ? 'btn-scrolled' : ''}`} onClick={handleLogout}>
                 Wyloguj
               </button>
