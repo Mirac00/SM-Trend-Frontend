@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2015", // Zmienione z "es5" na "es2015"
     "lib": [
       "dom",
       "dom.iterable",
@@ -18,7 +18,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "downlevelIteration": true // Dodane dla obsługi iteracji po Uint8Array
   },
   "include": [
     "src"
