@@ -20,22 +20,30 @@ function PostComponent() {
   }, []);
 
   const renderFile = (file: PostFile) => {
-    if (file.fileType.startsWith('image/')) {
-      return <img src={file.fileUrl} alt={file.fileName} className="img-fluid" />;
-    }
-    if (file.fileType.startsWith('video/')) {
-      return <video controls className="img-fluid">
-        <source src={file.fileUrl} type={file.fileType} />
-        Your browser does not support the video tag.
-      </video>;
-    }
-    if (file.fileType.startsWith('audio/')) {
-      return <audio controls>
-        <source src={file.fileUrl} type={file.fileType} />
-        Your browser does not support the audio tag.
-      </audio>;
-    }
-    return <a href={file.fileUrl} download={file.fileName}>{file.fileName}</a>;
+    return (
+      <div>
+        <p><strong>File Name:</strong> {file.fileName}</p>
+        <p><strong>File Type:</strong> {file.fileType}</p>
+        {file.fileType.startsWith('image/') && (
+          <img src={file.fileUrl} alt={file.fileName} className="img-fluid" />
+        )}
+        {file.fileType.startsWith('video/') && (
+          <video controls className="img-fluid">
+            <source src={file.fileUrl} type={file.fileType} />
+            Your browser does not support the video tag.
+          </video>
+        )}
+        {file.fileType.startsWith('audio/') && (
+          <audio controls>
+            <source src={file.fileUrl} type={file.fileType} />
+            Your browser does not support the audio tag.
+          </audio>
+        )}
+        {!file.fileType.startsWith('image/') && !file.fileType.startsWith('video/') && !file.fileType.startsWith('audio/') && (
+          <a href={file.fileUrl} download={file.fileName}>{file.fileName}</a>
+        )}
+      </div>
+    );
   };
 
   return (
