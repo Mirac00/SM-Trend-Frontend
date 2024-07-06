@@ -2,13 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { PostService } from '../../services/PostService';
 import { Post, PostFile } from '../../models/PostModel';
 
-function PostComponent() {
+interface PostComponentProps {
+  filter: {
+    fileType: string;
+    searchTerm: string;
+  };
+}
+
+function PostComponent({ filter }: PostComponentProps) {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const postsData = await PostService.getAllPosts();
+        const postsData = await PostService.getFilteredPosts(filter.fileType, filter.searchTerm);
         const sortedPosts = postsData.sort((a, b) => b.id - a.id);
         setPosts(sortedPosts);
       } catch (error) {
@@ -17,7 +24,7 @@ function PostComponent() {
     };
 
     fetchPosts();
-  }, []);
+  }, [filter]);
 
   const renderFile = (file: PostFile) => {
     return (

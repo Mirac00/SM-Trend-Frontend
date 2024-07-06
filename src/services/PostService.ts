@@ -16,4 +16,18 @@ export const PostService = {
       throw error;
     }
   },
+
+  getFilteredPosts: async (fileType: string, searchTerm: string): Promise<Post[]> => {
+    try {
+      const params = {
+        fileType,
+        searchTerm,
+      };
+      const response = await axios.get<Post[]>(`${API_URL}/filter`, { params });
+      return response.data;
+    } catch (error) {
+      console.error('Get filtered posts error:', error);
+      throw error;
+    }
+  },
 };

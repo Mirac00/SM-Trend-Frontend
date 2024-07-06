@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import PostComponent from '../common/PostComponent';
 import AddPostComponent from '../common/AddPostComponent';
+import FilterComponent from '../common/FilterComponent';
 
 /**
  * Komponent reprezentujący stronę główną aplikacji.
@@ -9,12 +10,20 @@ import AddPostComponent from '../common/AddPostComponent';
  */
 function Home() {
   const [updatePosts, setUpdatePosts] = useState(false);
+  const [filter, setFilter] = useState({ fileType: '', searchTerm: '' });
 
   /**
    * Obsługa dodania nowego posta.
    */
   const handlePostAdded = () => {
     setUpdatePosts(!updatePosts);
+  };
+
+  /**
+   * Obsługa zmiany filtra.
+   */
+  const handleFilterChange = (filter: { fileType: string; searchTerm: string }) => {
+    setFilter(filter);
   };
 
   return (
@@ -24,7 +33,8 @@ function Home() {
           <div className="row">
             <div className="col">
               <AddPostComponent onPostAdded={handlePostAdded} />
-              <PostComponent key={updatePosts ? 'updatePostsKey' : null} />
+              <FilterComponent onFilterChange={handleFilterChange} />
+              <PostComponent key={updatePosts ? 'updatePostsKey' : null} filter={filter} />
             </div>
           </div>
         </div>
