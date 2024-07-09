@@ -4,7 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 
-function activeEvents() {
+function TopTrend() {
   return (
     <React.Fragment>
     <div className="container mt-3">
@@ -20,4 +20,4 @@ function activeEvents() {
   );
 }
 
-export default activeEvents;
+export default TopTrend;

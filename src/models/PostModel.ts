@@ -12,6 +12,8 @@ export interface Post {
     username: string;
   };
   files: PostFile[];
+  likes: number; // Dodane pole dla like'ów
+  dislikes: number; // Dodane pole dla dislike'ów
 }
 
 export type { PostFile };

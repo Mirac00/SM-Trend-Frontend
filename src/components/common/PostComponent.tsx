@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { PostService } from '../../services/PostService';
 import { Post, PostFile } from '../../models/PostModel';
+import LikeDislikeComponent from './LikeDislikeComponent';
 
 interface PostComponentProps {
   filter: {
     fileType: string;
     searchTerm: string;
   };
+  userId: number; // Dodane pole UserId
 }
 
-function PostComponent({ filter }: PostComponentProps) {
+function PostComponent({ filter, userId }: PostComponentProps) {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
@@ -60,6 +62,7 @@ function PostComponent({ filter }: PostComponentProps) {
           <h3>{post.title}</h3>
           <p>{post.content}</p>
           <p>Author: {post.user.firstName} {post.user.lastName}</p>
+          <LikeDislikeComponent postId={post.id} initialLikes={post.likes} initialDislikes={post.dislikes} userId={userId} />
           {post.files && post.files.length > 0 && (
             <div>
               <h5>Files:</h5>

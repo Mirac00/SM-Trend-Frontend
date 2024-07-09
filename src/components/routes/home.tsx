@@ -11,6 +11,7 @@ import FilterComponent from '../common/FilterComponent';
 function Home() {
   const [updatePosts, setUpdatePosts] = useState(false);
   const [filter, setFilter] = useState({ fileType: '', searchTerm: '' });
+  const userId = 1; // Załóżmy, że mamy userId
 
   /**
    * Obsługa dodania nowego posta.
@@ -34,7 +35,7 @@ function Home() {
             <div className="col">
               <AddPostComponent onPostAdded={handlePostAdded} />
               <FilterComponent onFilterChange={handleFilterChange} />
-              <PostComponent key={updatePosts ? 'updatePostsKey' : null} filter={filter} />
+              <PostComponent key={updatePosts ? 'updatePostsKey' : null} filter={filter} userId={userId} />
             </div>
           </div>
         </div>
