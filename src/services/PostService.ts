@@ -68,4 +68,14 @@ export const PostService = {
       throw error;
     }
   },
+
+  getTopLikedPosts: async (): Promise<Post[]> => {
+    try {
+      const response = await axios.get<Post[]>(`${API_URL}/top-liked`);
+      return response.data;
+    } catch (error) {
+      console.error('Get top liked posts error:', error);
+      throw error;
+    }
+  },
 };
