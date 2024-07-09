@@ -19,6 +19,8 @@ const TopTrend: React.FC = () => {
     fetchTopPosts();
   }, []);
 
+  const isLoggedIn = !!localStorage.getItem('jwt'); // Sprawdzenie, czy użytkownik jest zalogowany
+
   const renderFile = (file: Post['files'][0]) => {
     return (
       <div key={file.id} className="mb-3">
@@ -40,7 +42,11 @@ const TopTrend: React.FC = () => {
           </audio>
         )}
         {!file.fileType.startsWith('image/') && !file.fileType.startsWith('video/') && !file.fileType.startsWith('audio/') && (
-          <a href={file.fileUrl} download={file.fileName}>{file.fileName}</a>
+          isLoggedIn ? (
+            <a href={file.fileUrl} download={file.fileName} className="btn btn-primary">Download</a>
+          ) : (
+            <p>You must be logged in to download files.</p>
+          )
         )}
       </div>
     );
@@ -57,7 +63,7 @@ const TopTrend: React.FC = () => {
             ) : (
               <ol className="list-group list-group-numbered">
                 {topPosts.map((post, index) => (
-                  <li key={post.id}>
+                  <li key={post.id} className="mb-3 p-3 bg-light border border-dark rounded">
                     <div className="d-flex justify-content-between align-items-center">
                       <h4 className="mb-1">{index + 1}. {post.title}</h4>
                       <div>

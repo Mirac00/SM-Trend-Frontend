@@ -27,7 +27,6 @@ const Login: React.FC<LoginProps> = ({ setUser, closeModal }) => {
       window.localStorage.setItem('jwt', user.token);
       setUser(user);
       closeModal();
-      navigate('/');
     } else {
       alert('Nieprawidłowy login lub hasło');
     }

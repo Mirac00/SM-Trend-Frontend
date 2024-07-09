@@ -13,6 +13,7 @@ interface PostComponentProps {
 
 function PostComponent({ filter, userId }: PostComponentProps) {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('jwt')); // Dodane sprawdzenie logowania
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -28,9 +29,21 @@ function PostComponent({ filter, userId }: PostComponentProps) {
     fetchPosts();
   }, [filter]);
 
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsLoggedIn(!!localStorage.getItem('jwt'));
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const renderFile = (file: PostFile) => {
     return (
-      <div>
+      <div key={file.id} className="mb-3">
         <p><strong>File Name:</strong> {file.fileName}</p>
         <p><strong>File Type:</strong> {file.fileType}</p>
         {file.fileType.startsWith('image/') && (
@@ -43,13 +56,16 @@ function PostComponent({ filter, userId }: PostComponentProps) {
           </video>
         )}
         {file.fileType.startsWith('audio/') && (
-          <audio controls>
+          <audio controls className="img-fluid">
             <source src={file.fileUrl} type={file.fileType} />
             Your browser does not support the audio tag.
           </audio>
         )}
         {!file.fileType.startsWith('image/') && !file.fileType.startsWith('video/') && !file.fileType.startsWith('audio/') && (
-          <a href={file.fileUrl} download={file.fileName}>{file.fileName}</a>
+          <p>Unsupported file type</p>
+        )}
+        {isLoggedIn && (
+          <a href={file.fileUrl} download={file.fileName} className="btn btn-primary mt-2">Download</a>
         )}
       </div>
     );
