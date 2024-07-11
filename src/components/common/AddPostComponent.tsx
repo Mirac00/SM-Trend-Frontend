@@ -27,6 +27,11 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
       return;
     }
 
+    if (!title.trim()) {
+      setErrorMessage('Pole tytuł jest wymagane.');
+      return;
+    }
+
     try {
       const fileData = await Promise.all(files.map(async (file) => {
         const arrayBuffer = await file.arrayBuffer();

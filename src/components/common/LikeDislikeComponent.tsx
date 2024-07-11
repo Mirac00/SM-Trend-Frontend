@@ -11,6 +11,31 @@ interface LikeDislikeComponentProps {
 const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, initialLikes, initialDislikes, userId }) => {
   const [likes, setLikes] = useState(initialLikes);
   const [dislikes, setDislikes] = useState(initialDislikes);
+  const [isNotLoggedIn, setIsNotLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('jwtToken');
+    if (token) {
+      setIsNotLoggedIn(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const token = localStorage.getItem('jwtToken');
+      if (token) {
+        setIsNotLoggedIn(false);
+      } else {
+        setIsNotLoggedIn(true);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const updateLikesAndDislikes = async () => {
     try {
@@ -26,8 +51,12 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
     try {
       await PostService.likePost(postId, userId);
       await updateLikesAndDislikes();
-    } catch (error) {
-      console.error('Error liking post:', error);
+    } catch (error: any) {
+      if (error.response && error.response.status === 401) {
+        setIsNotLoggedIn(true);
+      } else {
+        console.error('Error liking post:', error);
+      }
     }
   };
 
@@ -35,13 +64,22 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
     try {
       await PostService.dislikePost(postId, userId);
       await updateLikesAndDislikes();
-    } catch (error) {
-      console.error('Error disliking post:', error);
+    } catch (error: any) {
+      if (error.response && error.response.status === 401) {
+        setIsNotLoggedIn(true);
+      } else {
+        console.error('Error disliking post:', error);
+      }
     }
   };
 
   return (
     <div>
+      {isNotLoggedIn && (
+        <div className="alert alert-warning" role="alert">
+          Aby ocenić, zaloguj się.
+        </div>
+      )}
       <button onClick={handleLike} className="btn btn-success me-2">Like ({likes})</button>
       <button onClick={handleDislike} className="btn btn-danger">Dislike ({dislikes})</button>
     </div>
