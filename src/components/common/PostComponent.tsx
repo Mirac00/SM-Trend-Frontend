@@ -149,7 +149,7 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId }) => {
         ))}
       </div>
 
-      <div className="pagination-container d-flex justify-content-center mt-3">
+      <div className="pagination-container d-flex justify-content-center mt-3 mb-3">
         <button className="btn btn-secondary mx-2" onClick={goToPreviousPage} disabled={currentPage === 1}>Poprzednia</button>
         <span className="align-self-center mx-2">Strona {currentPage} z {totalPages}</span>
         <button className="btn btn-secondary mx-2" onClick={goToNextPage} disabled={currentPage === totalPages}>Następna</button>
