@@ -173,7 +173,7 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId }) => {
                   <>
                     {!isLoggedIn && (
                       <p>
-                        Aby pobrać plik, <button onClick={() => setIsLoginModalOpen(true)} className="btn btn-link">zaloguj się</button>.
+                        Aby pobrać plik, <button onClick={() => setIsLoginModalOpen(true)} className="btn btn-primary">zaloguj się</button>.
                       </p>
                     )}
                     {isLoggedIn && (

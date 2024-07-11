@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import '../../style/navbarStyle.css';
 import { User } from '../../models/User';
@@ -19,6 +19,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -50,7 +51,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
       const buttonIcon = document.querySelector('.navbar-toggler-icon');
       const button = document.querySelector('.navbar-toggler');
 
-      if (isMenuOpen || window.pageYOffset > 0 || (window.pageYOffset === 0 && isMenuOpen)) {
+      if (window.pageYOffset > 0 || isMenuOpen) {
         navbar?.classList.add('scrolled');
         navbarText.forEach(element => element.classList.add('text-scrolled'));
         navbarBtn.forEach(element => element.classList.add('btn-scrolled'));
@@ -66,11 +67,19 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
     };
 
     window.addEventListener('scroll', checkScroll);
+    checkScroll(); // Initial check when component mounts
 
     return () => {
       window.removeEventListener('scroll', checkScroll);
     };
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (isMenuOpen) {
+      setIsMenuOpen(false);
+    }
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     window.localStorage.removeItem('jwt');
