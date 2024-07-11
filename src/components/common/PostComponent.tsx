@@ -24,20 +24,24 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('jwt'));
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const postsPerPage = 20;
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const postsData = await PostService.getFilteredPosts(filter.fileType, filter.searchTerm);
         const sortedPosts = postsData.sort((a, b) => b.id - a.id);
-        setPosts(sortedPosts);
+        setPosts(sortedPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage));
+        setTotalPages(Math.ceil(sortedPosts.length / postsPerPage));
       } catch (error) {
         console.error('Error fetching posts:', error);
       }
     };
 
     fetchPosts();
-  }, [filter]);
+  }, [filter, currentPage]);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -113,6 +117,18 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId }) => {
     setSelectedPost(null);
   };
 
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   return (
     <div className="container mt-3">
       <div className="row">
@@ -131,6 +147,12 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId }) => {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="pagination-container d-flex justify-content-center mt-3">
+        <button className="btn btn-secondary mx-2" onClick={goToPreviousPage} disabled={currentPage === 1}>Poprzednia</button>
+        <span className="align-self-center mx-2">Strona {currentPage} z {totalPages}</span>
+        <button className="btn btn-secondary mx-2" onClick={goToNextPage} disabled={currentPage === totalPages}>Następna</button>
       </div>
 
       <Modal isOpen={!!selectedPost} onRequestClose={closeModal} className="post-modal" overlayClassName="modal-overlay">

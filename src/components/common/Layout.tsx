@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '../../style/layoutStyle.css';
 import Slider from './slider';
 import { User } from '../../models/User';
+import Footer from './Footer';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -22,9 +23,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <Slider />
         {children}
       </main>
-      <footer style={{ background: '#f5f5f5', padding: '10px 0' }}>
-        <p style={{ margin: '0', padding: '0 20px' }}>Stopka</p>
-      </footer>
+      <Footer />
     </div>
   );
 }
