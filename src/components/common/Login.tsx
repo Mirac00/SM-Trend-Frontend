@@ -1,4 +1,3 @@
-// Login.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User } from '../../models/User';
@@ -27,6 +26,7 @@ const Login: React.FC<LoginProps> = ({ setUser, closeModal }) => {
       window.localStorage.setItem('jwt', user.token);
       setUser(user);
       closeModal();
+      window.dispatchEvent(new Event('storage'));
     } else {
       alert('Nieprawidłowy login lub hasło');
     }

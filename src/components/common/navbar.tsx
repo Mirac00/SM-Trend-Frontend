@@ -50,8 +50,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
       const buttonIcon = document.querySelector('.navbar-toggler-icon');
       const button = document.querySelector('.navbar-toggler');
 
-
-      if ((isMenuOpen) || window.pageYOffset > 0 || (window.pageYOffset === 0 && (isMenuOpen))) {
+      if (isMenuOpen || window.pageYOffset > 0 || (window.pageYOffset === 0 && isMenuOpen)) {
         navbar?.classList.add('scrolled');
         navbarText.forEach(element => element.classList.add('text-scrolled'));
         navbarBtn.forEach(element => element.classList.add('btn-scrolled'));
@@ -77,6 +76,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
     window.localStorage.removeItem('jwt');
     setUser(null);
     setIsSessionExpired(false);
+    window.dispatchEvent(new Event('storage'));
   };
 
   const closeModal = () => {
@@ -158,12 +158,12 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
           <ul className="navbar-nav">
             <li>
               <Link to="/" className={`nav-link${isMenuOpen ? ' text-scrolled' : ''} nav-text navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>
-              <p className='text-center mb-0 btn-text'>Strona główna</p>
+                <p className='text-center mb-0 btn-text'>Strona główna</p>
               </Link>
             </li>
             <li>
               <Link to="/TopTrend" className={`nav-link${isMenuOpen ? ' text-scrolled' : ''} navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>
-              <p className='text-center mb-0 btn-text'>Top Trend</p>
+                <p className='text-center mb-0 btn-text'>Top Trend</p>
               </Link>
             </li>
             <li>
@@ -173,7 +173,6 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
             </li>
           </ul>
         </div>
-        
         <Modal
           isOpen={isModalOpen}
           onRequestClose={closeModal}
@@ -194,10 +193,9 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
             )}
           </div>
         </Modal>
-
         {isSessionExpired && (
           <div className="popup bg-white p-3 border border-dark rounded text-center mx-auto popup-sesion-over">
-            <div className="popup-inner ">
+            <div className="popup-inner">
               <p>Twoja sesja wygasła. Zaloguj się ponownie.</p>
               <button onClick={() => setIsSessionExpired(false)} className="close-popup">&#10006;</button>
             </div>
