@@ -2,8 +2,15 @@ import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Post } from '../../models/PostModel';
 import { PostService } from '../../services/PostService';
+import { FaVolumeUp } from 'react-icons/fa'; // Import icon
+import { Player } from 'video-react';
+import 'video-react/dist/video-react.css'; // Import video-react styles
+import 'react-h5-audio-player/lib/styles.css'; // Import styles for the audio player
+import AudioPlayer from 'react-h5-audio-player';
 
-const TopTrend: React.FC = () => {
+interface TopTrendProps {}
+
+const TopTrend: React.FC<TopTrendProps> = () => {
   const [topPosts, setTopPosts] = useState<Post[]>([]);
 
   useEffect(() => {
@@ -19,28 +26,78 @@ const TopTrend: React.FC = () => {
     fetchTopPosts();
   }, []);
 
-  const isLoggedIn = !!localStorage.getItem('jwt'); // Sprawdzenie, czy użytkownik jest zalogowany
+  const isLoggedIn = !!localStorage.getItem('jwt'); // Check if user is logged in
 
   const renderFile = (file: Post['files'][0]) => {
+    if (!file) return null;
+
+    if (file.fileType.startsWith('image/')) {
+      return (
+        <div key={file.id} className="mb-3">
+          <p><strong>File Name:</strong> {file.fileName}</p>
+          <p><strong>File Type:</strong> {file.fileType}</p>
+          <img src={file.fileUrl} alt={file.fileName} className="img-fluid" />
+          {!file.fileType.startsWith('image/') && (
+            isLoggedIn ? (
+              <a href={file.fileUrl} download={file.fileName} className="btn btn-primary">Download</a>
+            ) : (
+              <p>You must be logged in to download files.</p>
+            )
+          )}
+        </div>
+      );
+    }
+
+    if (file.fileType.startsWith('video/')) {
+      return (
+        <div key={file.id} className="mb-3">
+          <p><strong>File Name:</strong> {file.fileName}</p>
+          <p><strong>File Type:</strong> {file.fileType}</p>
+          <div className="video-container">
+            <Player>
+              <source src={file.fileUrl} />
+            </Player>
+          </div>
+          {!file.fileType.startsWith('video/') && (
+            isLoggedIn ? (
+              <a href={file.fileUrl} download={file.fileName} className="btn btn-primary">Download</a>
+            ) : (
+              <p>You must be logged in to download files.</p>
+            )
+          )}
+        </div>
+      );
+    }
+
+    if (file.fileType.startsWith('audio/')) {
+      return (
+        <div key={file.id} className="mb-3">
+          <p><strong>File Name:</strong> {file.fileName}</p>
+          <p><strong>File Type:</strong> {file.fileType}</p>
+          <div className="audio-container">
+            <AudioPlayer
+              src={file.fileUrl}
+              onPlay={() => console.log("onPlay")}
+              // other props here
+            />
+          </div>
+          {!file.fileType.startsWith('audio/') && (
+            isLoggedIn ? (
+              <a href={file.fileUrl} download={file.fileName} className="btn btn-primary">Download</a>
+            ) : (
+              <p>You must be logged in to download files.</p>
+            )
+          )}
+        </div>
+      );
+    }
+
+    // Default case if file type is not recognized
     return (
       <div key={file.id} className="mb-3">
         <p><strong>File Name:</strong> {file.fileName}</p>
         <p><strong>File Type:</strong> {file.fileType}</p>
-        {file.fileType.startsWith('image/') && (
-          <img src={file.fileUrl} alt={file.fileName} className="img-fluid" />
-        )}
-        {file.fileType.startsWith('video/') && (
-          <video controls className="img-fluid">
-            <source src={file.fileUrl} type={file.fileType} />
-            Your browser does not support the video tag.
-          </video>
-        )}
-        {file.fileType.startsWith('audio/') && (
-          <audio controls className="img-fluid">
-            <source src={file.fileUrl} type={file.fileType} />
-            Your browser does not support the audio tag.
-          </audio>
-        )}
+        <p>File type not supported</p>
         {!file.fileType.startsWith('image/') && !file.fileType.startsWith('video/') && !file.fileType.startsWith('audio/') && (
           isLoggedIn ? (
             <a href={file.fileUrl} download={file.fileName} className="btn btn-primary">Download</a>
