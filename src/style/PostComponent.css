@@ -1,20 +1,67 @@
 .post-tile {
   background-color: #fff;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .post-tile:hover {
   transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+.post-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.post-content {
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.file-type {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.likes-dislikes {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1rem;
+}
+
+.like-icon {
+  margin: 0 5px;
+  color: #086300;
+}
+
+.likes-dislikes{
+  margin: 0 5px;
+  color: #8f0b0b;
+}
+.likes-dislikes .dislike-icon {
+  margin-left: 1em; /* Adds 1em separation between like and dislike */
+}
 .img-thumbnail {
   width: 100%;
   height: auto;
-  pointer-events: none; /* Prevent download on right click */
+  pointer-events: none;
 }
-.img-fluid{
+
+.img-fluid {
   max-width: 80%;
 }
+
 .post-modal {
   width: 80%;
   max-height: 80%;
@@ -66,7 +113,7 @@
 }
 
 .col-md-5 {
-  width:30%;
+  width: 30%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -121,27 +168,27 @@
 .audio-player {
   width: 100%;
 }
+
 @media (max-width: 992px) {
   .modal-content .row {
-    flex-direction: row; /* Ustawienie na flex-direction: row, aby kolumny układały się obok siebie */
-    flex-wrap: wrap; /* Dodanie flex-wrap: wrap, aby kolumny mogły zajmować więcej niż jedną linię w przypadku małej szerokości ekranu */
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 
   .col-md-7 {
-    width: 50%; /* Szerokość 70% dla kolumny .col-md-7 w wersji mobilnej */
-    order: 1; /* Zmiana kolejności wyświetlania, jeśli potrzebujesz, aby .col-md-7 był pierwszy */
+    width: 50%;
+    order: 1;
   }
 
   .col-md-5 {
-    width: 30%; /* Szerokość 30% dla kolumny .col-md-5 w wersji mobilnej */
-    order: 2; /* Zmiana kolejności wyświetlania, jeśli potrzebujesz, aby .col-md-5 był drugi */
+    width: 30%;
+    order: 2;
   }
 
   .img-fluid {
-    max-width: 100%; /* Dostosowanie szerokości obrazu do szerokości kolumny */
+    max-width: 100%;
   }
 }
-
 
 @media (max-width: 720px) {
   .modal-content .row {
@@ -154,13 +201,5 @@
 
   .img-fluid {
     max-width: 50%;
-  }
-}
-
-@media (max-width: 720px) {
-
-
-  .img-fluid {
-    max-width: 70%;
   }
 }

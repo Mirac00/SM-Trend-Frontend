@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Player } from 'video-react';
-import "video-react/dist/video-react.css"; // Importuj styl dla video-react
+import "video-react/dist/video-react.css"; 
 import Modal from 'react-modal';
 import { PostService } from '../../services/PostService';
 import { Post, PostFile } from '../../models/PostModel';
 import LikeDislikeComponent from './LikeDislikeComponent';
 import Login from './Login';
 import '../../style/PostComponent.css';
-import { FaVolumeUp } from 'react-icons/fa'; // Import icon
-import 'react-h5-audio-player/lib/styles.css'; // Import styles for the audio player
+import { FaVolumeUp } from 'react-icons/fa';
+import 'react-h5-audio-player/lib/styles.css';
 import AudioPlayer from 'react-h5-audio-player';
+import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
 
 interface PostComponentProps {
   filter: {
@@ -101,7 +102,6 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId }) => {
           <AudioPlayer
             src={file.fileUrl}
             onPlay={() => console.log("onPlay")}
-            // other props here
           />
         </div>
       );
@@ -135,15 +135,17 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId }) => {
         {posts.map((post) => (
           <div key={post.id} className="col-md-3 mb-3">
             <div
-              className="post-tile p-3 border rounded"
+              className="post-tile p-3 border rounded shadow-sm"
               onClick={() => handleTileClick(post)}
               style={{ cursor: 'pointer' }}
             >
-              <h3>{truncateText(post.title, 15)}</h3>
-              <p>{truncateText(post.content, 30)}</p>
+              <h3 className="post-title">{truncateText(post.title, 15)}</h3>
+              <p className="post-content">{truncateText(post.content, 30)}</p>
               {post.files && post.files.length > 0 && renderFileThumbnail(post.files[0])}
-              <p>File Type: {post.files && post.files.length > 0 ? post.files[0].fileType : 'Brak plików'}</p>
-              <p>Likes: {post.likes} Dislikes: {post.dislikes}</p>
+              <p className="file-type">File Type: {post.files && post.files.length > 0 ? post.files[0].fileType : 'Brak plików'}</p>
+              <div className="likes-dislikes">
+                <FaThumbsUp className="like-icon" /> {post.likes}<FaThumbsDown className="dislike-icon" /> {post.dislikes}
+              </div>
             </div>
           </div>
         ))}
