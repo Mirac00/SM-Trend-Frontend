@@ -45,13 +45,15 @@
   color: #086300;
 }
 
-.likes-dislikes{
+.dislike-icon {
   margin: 0 5px;
-  color: #8f0b0b;
+  color: #ab0505;
 }
+
 .likes-dislikes .dislike-icon {
   margin-left: 1em; /* Adds 1em separation between like and dislike */
 }
+
 .img-thumbnail {
   width: 100%;
   height: auto;
@@ -64,7 +66,9 @@
 
 .post-modal {
   width: 80%;
-  max-height: 80%;
+  max-width: 1000px;
+  max-height: 80vh;
+  overflow-y: auto;
   margin: auto;
   background: #fff;
   padding: 20px;
