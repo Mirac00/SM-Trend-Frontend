@@ -14,15 +14,17 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
   const [isNotLoggedIn, setIsNotLoggedIn] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('jwtToken');
+    const token = localStorage.getItem('jwt');
     if (token) {
       setIsNotLoggedIn(false);
+    } else {
+      setIsNotLoggedIn(true);
     }
   }, []);
 
   useEffect(() => {
     const handleStorageChange = () => {
-      const token = localStorage.getItem('jwtToken');
+      const token = localStorage.getItem('jwt');
       if (token) {
         setIsNotLoggedIn(false);
       } else {
@@ -48,8 +50,10 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
   };
 
   const handleLike = async () => {
+    console.log('Attempting to like post...');
     try {
       await PostService.likePost(postId, userId);
+      console.log('Like successful');
       await updateLikesAndDislikes();
     } catch (error: any) {
       if (error.response && error.response.status === 401) {
@@ -61,8 +65,10 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
   };
 
   const handleDislike = async () => {
+    console.log('Attempting to dislike post...');
     try {
       await PostService.dislikePost(postId, userId);
+      console.log('Dislike successful');
       await updateLikesAndDislikes();
     } catch (error: any) {
       if (error.response && error.response.status === 401) {

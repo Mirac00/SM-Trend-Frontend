@@ -176,6 +176,13 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
               </Link>
             </li>
             <li>
+            {user && (
+              <Link to="/my-profile" className={`nav-link${isMenuOpen ? ' text-scrolled' : ''} nav-text navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>
+                 <p className='text-center mb-0 btn-text'>Mój Profil</p>
+              </Link>
+            )}
+            </li>
+            <li>
               <Link to="/Contact" className={`nav-link${isMenuOpen ? ' text-scrolled' : ''} navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>
                 <p className='text-center mb-0 btn-text'>Kontakt</p>
               </Link>

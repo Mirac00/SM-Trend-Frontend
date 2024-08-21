@@ -1,81 +1,133 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { Post } from '../models/PostModel';
 
 const API_URL = 'https://localhost:44352/Posts';
 
 export const PostService = {
-  getAllPosts: async (): Promise<Post[]> => {
+  async getAllPosts(): Promise<Post[]> {
     try {
-      const response = await axios.get<Post[]>(API_URL, {
-        responseType: 'json',
-        timeout: 30000, // 30 seconds timeout
-      });
+      const response = await axios.get<Post[]>(API_URL);
       return response.data;
     } catch (error) {
-      console.error('Get all posts error:', error);
-      throw error;
+      this.handleError(error, 'Get all posts error:');
+      return []; // Return an empty array as a fallback
     }
   },
 
-  getFilteredPosts: async (fileType: string, searchTerm: string): Promise<Post[]> => {
+  async getFilteredPosts(fileType: string, searchTerm: string): Promise<Post[]> {
     try {
-      const params = {
-        fileType,
-        searchTerm,
-      };
+      const params = { fileType, searchTerm };
       const response = await axios.get<Post[]>(`${API_URL}/filter`, { params });
       return response.data;
     } catch (error) {
-      console.error('Get filtered posts error:', error);
-      throw error;
+      this.handleError(error, 'Get filtered posts error:');
+      return []; // Return an empty array as a fallback
     }
   },
 
-  likePost: async (postId: number, userId: number): Promise<void> => {
+  async getLikedPosts(userId: number): Promise<Post[]> {
     try {
-      const token = localStorage.getItem('jwt'); // Pobieranie tokena z localStorage
-      await axios.post(`${API_URL}/like`, { postId, userId }, {
+      const token = this.getToken();
+      if (!token) throw new Error('User is not authenticated.');
+      const response = await axios.get<Post[]>(`${API_URL}/liked-posts`, {
+        params: { userId },
         headers: {
           Authorization: `Bearer ${token}`,
-        }
+        },
       });
+      return response.data;
     } catch (error) {
-      console.error('Like post error:', error);
-      throw error;
+      this.handleError(error, 'Get liked posts error:');
+      return []; // Return an empty array as a fallback
     }
   },
 
-  dislikePost: async (postId: number, userId: number): Promise<void> => {
+  async getMyPosts(userId: number): Promise<Post[]> {
     try {
-      const token = localStorage.getItem('jwt'); // Pobieranie tokena z localStorage
-      await axios.post(`${API_URL}/dislike`, { postId, userId }, {
+      const token = this.getToken();
+      if (!token) throw new Error('User is not authenticated.');
+      const response = await axios.get<Post[]>(`${API_URL}/my-posts`, {
+        params: { userId },
         headers: {
           Authorization: `Bearer ${token}`,
-        }
+        },
       });
+      return response.data;
     } catch (error) {
-      console.error('Dislike post error:', error);
-      throw error;
+      this.handleError(error, 'Get my posts error:');
+      return []; // Return an empty array as a fallback
     }
   },
 
-  getPostById: async (postId: number): Promise<Post> => {
+  async likePost(postId: number, userId: number): Promise<void> {
+    try {
+      const token = this.getToken();
+      if (!token) throw new Error('User is not authenticated.');
+      await axios.post(
+        `${API_URL}/like`,
+        { postId, userId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    } catch (error) {
+      this.handleError(error, 'Like post error:');
+    }
+  },
+
+  async dislikePost(postId: number, userId: number): Promise<void> {
+    try {
+      const token = this.getToken();
+      if (!token) throw new Error('User is not authenticated.');
+      await axios.post(
+        `${API_URL}/dislike`,
+        { postId, userId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    } catch (error) {
+      this.handleError(error, 'Dislike post error:');
+    }
+  },
+
+  async getPostById(postId: number): Promise<Post> {
     try {
       const response = await axios.get<Post>(`${API_URL}/${postId}`);
       return response.data;
     } catch (error) {
-      console.error('Get post by id error:', error);
-      throw error;
+      this.handleError(error, 'Get post by id error:');
+      return {} as Post; // Return an empty object as a fallback
     }
   },
 
-  getTopLikedPosts: async (): Promise<Post[]> => {
+  async getTopLikedPosts(): Promise<Post[]> {
     try {
       const response = await axios.get<Post[]>(`${API_URL}/top-liked`);
       return response.data;
     } catch (error) {
-      console.error('Get top liked posts error:', error);
-      throw error;
+      this.handleError(error, 'Get top liked posts error:');
+      return []; // Return an empty array as a fallback
+    }
+  },
+
+  getToken(): string | null {
+    const token = localStorage.getItem('jwt');
+    if (!token) {
+      console.error('User is not authenticated.');
+    }
+    return token;
+  },
+
+  handleError(error: unknown, message: string): void {
+    if (error instanceof AxiosError) {
+      console.error(message, error.response?.status, error.response?.data);
+    } else {
+      console.error(message, error);
     }
   },
 };

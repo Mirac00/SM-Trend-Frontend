@@ -1,7 +1,8 @@
 export interface User {
-    id: number;
-    firstName: string;
-    lastName: string;
-    username: string;
-    token: string;
-  }
+  id: number;
+  firstName: string;
+  lastName: string;
+  username: string;
+  password?: string; // Add password as an optional property
+  token: string;
+}

@@ -1,72 +1,106 @@
-import { jwtDecode } from "jwt-decode";
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { User } from '../models/User';
 import { AuthenticateRequest } from '../models/AuthenticateRequest';
 
-export class UserService {
-  static isTokenValid(token: string): boolean {
-    if (!token) return false;
+const API_URL = 'https://localhost:44352/Users';
 
-    const decoded = jwtDecode(token);
-    const expirationTime: number | undefined = decoded.exp ? decoded.exp * 1000 : undefined; // convert to milliseconds
-
-    return expirationTime ? Date.now() < expirationTime : false;
-  }
-
-  static async authenticate(request: AuthenticateRequest): Promise<User | null> {
+export const UserService = {
+  async getUserByToken(token: string): Promise<User | null> {
     try {
-      const response: AxiosResponse<User> = await axios.post<User>('https://localhost:44352/Users/authenticate', request);
-      return response.data;
-    } catch (error) {
-      return null;
-    }
-  }
-
-  static async getUserByToken(token: string): Promise<User | null> {
-    try {
-      if (!this.isTokenValid(token)) {
-        // If token is not valid, remove it and return null
-        window.localStorage.removeItem('jwt');
-        return null;
-      }
-  
-      const response: AxiosResponse<User> = await axios.get<User>('https://localhost:44352/Users/GetUserByToken', {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await axios.get<User>(`${API_URL}/GetUserByToken`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError;
-  
-      if (axiosError.response && axiosError.response.status === 401) {
-        // If unauthorized, remove token and return null
-        window.localStorage.removeItem('jwt');
-        return null;
-      }
-  
+      console.error('Error fetching user by token:', error);
       return null;
     }
-  }
-  
+  },
 
-  static checkAndRemoveExpiredToken(token: string | null): void {
-    if (token) {
-      const decoded = jwtDecode(token);
-      if (decoded.exp) {
-        const expirationDate = new Date(decoded.exp * 1000);
+  async authenticate(request: AuthenticateRequest): Promise<User | null> {
+    try {
+      const response = await axios.post<User>(`${API_URL}/authenticate`, request);
+      const user = response.data;
+      
+      // Store the token in local storage
+      localStorage.setItem('jwt', user.token);
+
+      return user;
+    } catch (error) {
+      console.error('Authentication error:', error);
+      return null;
+    }
+  },
+
+  async register(user: User): Promise<void> {
+    try {
+      await axios.post(`${API_URL}/register`, user);
+    } catch (error) {
+      console.error('Registration error:', error);
+    }
+  },
+
+  async updateProfile(userId: number, updatedUser: Partial<User>): Promise<void> {
+    try {
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        throw new Error('User is not authenticated.');
       }
-      if (!this.isTokenValid(token)) {
-        window.localStorage.removeItem('jwt');
+
+      await axios.put(`${API_URL}/${userId}/update-profile`, updatedUser, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.error('Profile update error:', error);
+      } else {
+        console.error('Unexpected error during profile update:', error);
       }
     }
-  }
-}
+  },
 
-// Nasłuchiwanie na zdarzenie zmiany w localStorage
-window.addEventListener('storage', (event) => {
-  if (event.key === 'jwt') {
-    UserService.checkAndRemoveExpiredToken(event.newValue);
-  }
-});
+  async getAll(): Promise<User[]> {
+    try {
+      const response = await axios.get<User[]>(API_URL);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching all users:', error);
+      return [];
+    }
+  },
 
-// Sprawdzanie i usuwanie wygasłego tokenu przy starcie aplikacji
-UserService.checkAndRemoveExpiredToken(window.localStorage.getItem('jwt'));
+  async getById(id: number): Promise<User | null> {
+    try {
+      const response = await axios.get<User>(`${API_URL}/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching user with id ${id}:`, error);
+      return null;
+    }
+  },
+
+  async delete(id: number): Promise<void> {
+    try {
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        throw new Error('User is not authenticated.');
+      }
+
+      await axios.delete(`${API_URL}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.error(`Error deleting user with id ${id}:`, error);
+      } else {
+        console.error('Unexpected error during user deletion:', error);
+      }
+    }
+  },
+};
