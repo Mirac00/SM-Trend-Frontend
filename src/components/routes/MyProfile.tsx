@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { UserService } from '../../services/UserService';
+import { PostService } from '../../services/PostService';
 import PostComponent from '../common/PostComponent';
 import { User } from '../../models/User';
+import { Post } from '../../models/PostModel';
 
 const MyProfile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [view, setView] = useState<'liked' | 'my'>('liked');
 
   useEffect(() => {
@@ -18,6 +21,31 @@ const MyProfile: React.FC = () => {
 
     fetchUserProfile();
   }, []);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (user) {
+        try {
+          let fetchedPosts: Post[] = [];
+          if (view === 'liked') {
+            // Fetch liked posts by the user
+            console.log('Fetching liked posts for user:', user.id);
+            fetchedPosts = await PostService.getLikedPostsByUser(user.id);
+          } else {
+            // Fetch posts created by the user
+            console.log('Fetching user posts for user:', user.id);
+            fetchedPosts = await PostService.getPostsByUser(user.id);
+          }
+          console.log('Fetched posts:', fetchedPosts);
+          setPosts(fetchedPosts);
+        } catch (error) {
+          console.error('Error fetching posts:', error);
+        }
+      }
+    };
+
+    fetchPosts();
+  }, [user, view]);
 
   const handleUpdateProfile = async (updatedUser: Partial<User>) => {
     if (user) {
@@ -85,7 +113,8 @@ const MyProfile: React.FC = () => {
             {view === 'liked' ? 'Moje Posty' : 'Polubione Posty'}
           </button>
         </div>
-        <PostComponent filter={{ fileType: '', searchTerm: '' }} userId={user?.id || 0} />
+        {/* Pass the filtered posts directly to PostComponent */}
+        <PostComponent filter={{ fileType: '', searchTerm: '' }} userId={user?.id || 0} posts={posts} />
       </div>
     </div>
   );

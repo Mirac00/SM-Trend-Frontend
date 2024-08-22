@@ -2,15 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Player } from 'video-react';
 import "video-react/dist/video-react.css"; 
 import Modal from 'react-modal';
-import { PostService } from '../../services/PostService';
 import { Post, PostFile } from '../../models/PostModel';
-import LikeDislikeComponent from './LikeDislikeComponent';
-import Login from './Login';
 import '../../style/PostComponent.css';
-import { FaVolumeUp } from 'react-icons/fa';
+import { FaVolumeUp, FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
 import 'react-h5-audio-player/lib/styles.css';
 import AudioPlayer from 'react-h5-audio-player';
-import { FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
+import LikeDislikeComponent from './LikeDislikeComponent'; // Dodanie brakującego importu
+import { PostService } from '../../services/PostService'; // Import PostService
 
 interface PostComponentProps {
   filter: {
@@ -18,43 +16,45 @@ interface PostComponentProps {
     searchTerm: string;
   };
   userId: number;
+  posts?: Post[]; // Pozwalamy na opcjonalne przekazanie postów
 }
 
-const PostComponent: React.FC<PostComponentProps> = ({ filter, userId }) => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('jwt'));
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+const PostComponent: React.FC<PostComponentProps> = ({ filter, userId, posts: initialPosts }) => {
+  const [posts, setPosts] = useState<Post[]>(initialPosts || []);
+  const postsPerPage = 20;
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const postsPerPage = 20;
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const postsData = await PostService.getFilteredPosts(filter.fileType, filter.searchTerm);
-        const sortedPosts = postsData.sort((a, b) => b.id - a.id);
-        setPosts(sortedPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage));
-        setTotalPages(Math.ceil(sortedPosts.length / postsPerPage));
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      }
-    };
+    if (!initialPosts) {
+      const fetchPosts = async () => {
+        try {
+          let postsData: Post[] = [];
 
-    fetchPosts();
-  }, [filter, currentPage]);
+          // Fetch posts based on the filter or fetch all if no filter is applied
+          if (filter.fileType || filter.searchTerm) {
+            postsData = await PostService.getFilteredPosts(filter.fileType, filter.searchTerm);
+          } else {
+            postsData = await PostService.getAllPosts();
+          }
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setIsLoggedIn(!!localStorage.getItem('jwt'));
-    };
+          const sortedPosts = postsData.sort((a, b) => b.id - a.id);
+          setPosts(sortedPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage));
+          setTotalPages(Math.ceil(sortedPosts.length / postsPerPage));
+        } catch (error) {
+          console.error('Error fetching posts:', error);
+        }
+      };
 
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
+      fetchPosts();
+    } else {
+      // Jeśli `initialPosts` są przekazane, użyj ich i oblicz ilość stron
+      const sortedPosts = initialPosts.sort((a, b) => b.id - a.id);
+      setPosts(sortedPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage));
+      setTotalPages(Math.ceil(initialPosts.length / postsPerPage));
+    }
+  }, [filter, currentPage, userId, initialPosts]);
 
   const truncateText = (text: string, maxLength: number) => {
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
@@ -171,30 +171,11 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId }) => {
                 )}
               </div>
               <div className="col-md-5 d-flex flex-column justify-content-center">
-                {selectedPost.files && selectedPost.files.length > 0 && (
-                  <>
-                    {!isLoggedIn && (
-                      <p>
-                        Aby pobrać plik, <button onClick={() => setIsLoginModalOpen(true)} className="btn btn-primary">zaloguj się</button>.
-                      </p>
-                    )}
-                    {isLoggedIn && (
-                      <a href={selectedPost.files[0].fileUrl} download={selectedPost.files[0].fileName} className="btn btn-primary">Download</a>
-                    )}
-                  </>
-                )}
                 <p>{selectedPost.content}</p>
                 <LikeDislikeComponent postId={selectedPost.id} initialLikes={selectedPost.likes} initialDislikes={selectedPost.dislikes} userId={userId} />
               </div>
             </div>
           )}
-        </div>
-      </Modal>
-
-      <Modal isOpen={isLoginModalOpen} onRequestClose={() => setIsLoginModalOpen(false)} className="login-modal" overlayClassName="modal-overlay">
-        <div className="modal-content">
-          <button type="button" className="btn-close" aria-label="Close" onClick={() => setIsLoginModalOpen(false)}>&times;</button>
-          <Login setUser={(user) => { if (user) setIsLoggedIn(true); }} closeModal={() => setIsLoginModalOpen(false)} />
         </div>
       </Modal>
     </div>
