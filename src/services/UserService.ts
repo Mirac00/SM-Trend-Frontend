@@ -14,8 +14,16 @@ export const UserService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error fetching user by token:', error);
-      return null;
+      if (axios.isAxiosError(error) && error.response && error.response.status === 401) {
+        // Token jest nieprawidłowy lub wygasł
+        console.error('Token jest nieprawidłowy lub wygasł:', error);
+        // Usuwamy token z localStorage
+        localStorage.removeItem('jwt');
+        return null;
+      } else {
+        console.error('Błąd podczas pobierania użytkownika po tokenie:', error);
+        return null;
+      }
     }
   },
 
@@ -24,12 +32,14 @@ export const UserService = {
       const response = await axios.post<User>(`${API_URL}/authenticate`, request);
       const user = response.data;
       
-      // Store the token in local storage
+      // Zapisujemy token w localStorage
       localStorage.setItem('jwt', user.token);
+      // Usuwamy flagę 'loggedOut' po zalogowaniu
+      localStorage.removeItem('loggedOut');
 
       return user;
     } catch (error) {
-      console.error('Authentication error:', error);
+      console.error('Błąd podczas uwierzytelniania:', error);
       return null;
     }
   },
@@ -38,7 +48,7 @@ export const UserService = {
     try {
       await axios.post(`${API_URL}/register`, user);
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Błąd podczas rejestracji:', error);
     }
   },
 
@@ -55,10 +65,10 @@ export const UserService = {
         },
       });
     } catch (error) {
-      if (error instanceof AxiosError) {
-        console.error('Profile update error:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Błąd podczas aktualizacji profilu:', error);
       } else {
-        console.error('Unexpected error during profile update:', error);
+        console.error('Nieoczekiwany błąd podczas aktualizacji profilu:', error);
       }
     }
   },
@@ -68,7 +78,7 @@ export const UserService = {
       const response = await axios.get<User[]>(API_URL);
       return response.data;
     } catch (error) {
-      console.error('Error fetching all users:', error);
+      console.error('Błąd podczas pobierania wszystkich użytkowników:', error);
       return [];
     }
   },
@@ -78,7 +88,7 @@ export const UserService = {
       const response = await axios.get<User>(`${API_URL}/${id}`);
       return response.data;
     } catch (error) {
-      console.error(`Error fetching user with id ${id}:`, error);
+      console.error(`Błąd podczas pobierania użytkownika o id ${id}:`, error);
       return null;
     }
   },
@@ -96,10 +106,10 @@ export const UserService = {
         },
       });
     } catch (error) {
-      if (error instanceof AxiosError) {
-        console.error(`Error deleting user with id ${id}:`, error);
+      if (axios.isAxiosError(error)) {
+        console.error(`Błąd podczas usuwania użytkownika o id ${id}:`, error);
       } else {
-        console.error('Unexpected error during user deletion:', error);
+        console.error('Nieoczekiwany błąd podczas usuwania użytkownika:', error);
       }
     }
   },

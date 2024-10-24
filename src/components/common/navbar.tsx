@@ -19,18 +19,31 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false); // Dodany stan
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
     const checkUser = async () => {
       const jwt = window.localStorage.getItem('jwt');
+      const loggedOut = window.localStorage.getItem('loggedOut') === 'true';
+
       if (!jwt) {
         setUser(null);
-        setIsSessionExpired(true);
+        if (!loggedOut) {
+          setIsSessionExpired(true); // Token wygasł samoczynnie
+        } else {
+          setIsSessionExpired(false); // Użytkownik wylogował się ręcznie
+        }
       } else {
         const user: User | null = await UserService.getUserByToken(jwt);
-        setUser(user);
+        if (user) {
+          setUser(user);
+          setIsSessionExpired(false);
+          window.localStorage.removeItem('loggedOut'); // Usuwamy flagę po zalogowaniu
+        } else {
+          setUser(null);
+          setIsSessionExpired(true); // Token jest nieprawidłowy lub wygasł
+        }
       }
       setIsLoading(false);
     };
@@ -70,6 +83,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
 
   const handleLogout = () => {
     window.localStorage.removeItem('jwt');
+    window.localStorage.setItem('loggedOut', 'true'); // Ustawiamy flagę, że użytkownik wylogował się ręcznie
     setUser(null);
     setIsSessionExpired(false);
     window.dispatchEvent(new Event('storage'));
@@ -183,7 +197,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
           </div>
         </Modal>
         {isSessionExpired && (
-          <div className="popup bg-white p-3 border border-dark rounded text-center mx-auto popup-sesion-over">
+          <div className="popup bg-white p-3 border border-dark rounded text-center mx-auto popup-session-over">
             <div className="popup-inner">
               <p>Twoja sesja wygasła. Zaloguj się ponownie.</p>
               <button onClick={() => setIsSessionExpired(false)} className="close-popup">&#10006;</button>

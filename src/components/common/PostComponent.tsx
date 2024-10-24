@@ -3,12 +3,12 @@ import { Player } from 'video-react';
 import "video-react/dist/video-react.css"; 
 import Modal from 'react-modal';
 import { Post, PostFile } from '../../models/PostModel';
-import '../../style/PostComponent.css';
 import { FaVolumeUp, FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
 import 'react-h5-audio-player/lib/styles.css';
 import AudioPlayer from 'react-h5-audio-player';
-import LikeDislikeComponent from './LikeDislikeComponent'; // Dodanie brakującego importu
-import { PostService } from '../../services/PostService'; // Import PostService
+import LikeDislikeComponent from './LikeDislikeComponent';
+import { PostService } from '../../services/PostService';
+import '../../style/PostComponent.css';
 
 interface PostComponentProps {
   filter: {
@@ -16,7 +16,7 @@ interface PostComponentProps {
     searchTerm: string;
   };
   userId: number;
-  posts?: Post[]; // Pozwalamy na opcjonalne przekazanie postów
+  posts?: Post[];
 }
 
 const PostComponent: React.FC<PostComponentProps> = ({ filter, userId, posts: initialPosts }) => {
@@ -26,13 +26,17 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId, posts: in
   const [totalPages, setTotalPages] = useState(1);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
+  // Ustawienie elementu głównego dla modalu
+  useEffect(() => {
+    Modal.setAppElement('#root');
+  }, []);
+
   useEffect(() => {
     if (!initialPosts) {
       const fetchPosts = async () => {
         try {
           let postsData: Post[] = [];
 
-          // Fetch posts based on the filter or fetch all if no filter is applied
           if (filter.fileType || filter.searchTerm) {
             postsData = await PostService.getFilteredPosts(filter.fileType, filter.searchTerm);
           } else {
@@ -49,7 +53,6 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId, posts: in
 
       fetchPosts();
     } else {
-      // Jeśli `initialPosts` są przekazane, użyj ich i oblicz ilość stron
       const sortedPosts = initialPosts.sort((a, b) => b.id - a.id);
       setPosts(sortedPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage));
       setTotalPages(Math.ceil(initialPosts.length / postsPerPage));
@@ -74,7 +77,7 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId, posts: in
     }
     if (file.fileType.startsWith('audio/')) {
       return (
-        <div className="audio-thumbnail">
+        <div className="d-flex justify-content-center align-items-center bg-light rounded" style={{ height: '100px' }}>
           <FaVolumeUp size={50} />
         </div>
       );
@@ -98,12 +101,11 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId, posts: in
     }
     if (file.fileType.startsWith('audio/')) {
       return (
-        <div className="audio-container">
-          <AudioPlayer
-            src={file.fileUrl}
-            onPlay={() => console.log("onPlay")}
-          />
-        </div>
+        <AudioPlayer
+          src={file.fileUrl}
+          onPlay={() => console.log("onPlay")}
+          className="w-100"
+        />
       );
     }
     return <div>{file.fileType}</div>;
@@ -135,47 +137,65 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId, posts: in
         {posts.map((post) => (
           <div key={post.id} className="col-md-3 mb-3">
             <div
-              className="post-tile p-3 border rounded shadow-sm"
+              className="card h-100 post-tile"
               onClick={() => handleTileClick(post)}
               style={{ cursor: 'pointer' }}
             >
-              <h3 className="post-title">{truncateText(post.title, 15)}</h3>
-              <p className="post-content">{truncateText(post.content, 30)}</p>
-              {post.files && post.files.length > 0 && renderFileThumbnail(post.files[0])}
-              <p className="file-type">File Type: {post.files && post.files.length > 0 ? post.files[0].fileType : 'Brak plików'}</p>
-              <div className="likes-dislikes">
-                <FaThumbsUp className="like-icon" /> {post.likes}<FaThumbsDown className="dislike-icon" /> {post.dislikes}
+              <div className="card-body d-flex flex-column align-items-center">
+                <h5 className="card-title text-center">{truncateText(post.title, 15)}</h5>
+                <p className="card-text text-center">{truncateText(post.content, 30)}</p>
+                {post.files && post.files.length > 0 && renderFileThumbnail(post.files[0])}
+                <p className="text-muted mt-2">Typ pliku: {post.files && post.files.length > 0 ? post.files[0].fileType : 'Brak plików'}</p>
+                <div className="d-flex justify-content-center align-items-center mt-2">
+                  <FaThumbsUp className={`me-1 ${post.likes > 0 ? 'text-success' : ''}`} /> {post.likes}
+                  <FaThumbsDown className={`ms-3 me-1 ${post.dislikes > 0 ? 'text-danger' : ''}`} /> {post.dislikes}
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="pagination-container d-flex justify-content-center mt-3 mb-3">
+      <div className="d-flex justify-content-center mt-3 mb-3">
         <button className="btn btn-secondary mx-2" onClick={goToPreviousPage} disabled={currentPage === 1}>Poprzednia</button>
         <span className="align-self-center mx-2">Strona {currentPage} z {totalPages}</span>
         <button className="btn btn-secondary mx-2" onClick={goToNextPage} disabled={currentPage === totalPages}>Następna</button>
       </div>
 
-      <Modal isOpen={!!selectedPost} onRequestClose={closeModal} className="post-modal" overlayClassName="modal-overlay">
+      <Modal
+        isOpen={!!selectedPost}
+        onRequestClose={closeModal}
+        className="modal-dialog"
+        overlayClassName="modal-overlay"
+        contentLabel="Post Modal"
+      >
         <div className="modal-content">
-          <button type="button" className="btn-close" aria-label="Close" onClick={closeModal}>&times;</button>
-          {selectedPost && (
-            <div className="row">
-              <div className="col-md-7">
-                <h3>{selectedPost.title}</h3>
-                {selectedPost.files && selectedPost.files.length > 0 ? (
-                  renderFileInModal(selectedPost.files[0])
-                ) : (
+          <div className="modal-header">
+            <h5 className="modal-title">{selectedPost?.title}</h5>
+            <button type="button" className="btn-close" onClick={closeModal} aria-label="Close"></button>
+          </div>
+          <div className="modal-body">
+            {selectedPost && (
+              <div className="row">
+                <div className="col-12 mb-3">
+                  {selectedPost.files && selectedPost.files.length > 0 ? (
+                    renderFileInModal(selectedPost.files[0])
+                  ) : (
+                    <p>{selectedPost.content}</p>
+                  )}
+                </div>
+                <div className="col-12">
                   <p>{selectedPost.content}</p>
-                )}
+                  <LikeDislikeComponent
+                    postId={selectedPost.id}
+                    initialLikes={selectedPost.likes}
+                    initialDislikes={selectedPost.dislikes}
+                    userId={userId}
+                  />
+                </div>
               </div>
-              <div className="col-md-5 d-flex flex-column justify-content-center">
-                <p>{selectedPost.content}</p>
-                <LikeDislikeComponent postId={selectedPost.id} initialLikes={selectedPost.likes} initialDislikes={selectedPost.dislikes} userId={userId} />
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </Modal>
     </div>
