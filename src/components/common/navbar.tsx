@@ -19,6 +19,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false); // Dodany stan
   const location = useLocation();
 
   useEffect(() => {
@@ -45,29 +46,15 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
 
   useEffect(() => {
     const checkScroll = () => {
-      const navbar = document.querySelector('.sticky-top');
-      const navbarText = document.querySelectorAll('.navbar-text');
-      const navbarBtn = document.querySelectorAll('.navbar-btn');
-      const buttonIcon = document.querySelector('.navbar-toggler-icon');
-      const button = document.querySelector('.navbar-toggler');
-
       if (window.pageYOffset > 0 || isMenuOpen) {
-        navbar?.classList.add('scrolled');
-        navbarText.forEach(element => element.classList.add('text-scrolled'));
-        navbarBtn.forEach(element => element.classList.add('btn-scrolled'));
-        buttonIcon?.classList.add('icon-scrolled');
-        button?.classList.add('button-scrolled');
+        setIsScrolled(true);
       } else {
-        navbar?.classList.remove('scrolled');
-        navbarText.forEach(element => element.classList.remove('text-scrolled'));
-        navbarBtn.forEach(element => element.classList.remove('btn-scrolled'));
-        buttonIcon?.classList.remove('icon-scrolled');
-        button?.classList.remove('button-scrolled');
+        setIsScrolled(false);
       }
     };
 
     window.addEventListener('scroll', checkScroll);
-    checkScroll(); // Initial check when component mounts
+    checkScroll(); // Początkowe sprawdzenie po zamontowaniu komponentu
 
     return () => {
       window.removeEventListener('scroll', checkScroll);
@@ -93,20 +80,6 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   };
 
   const handleMenuToggle = () => {
-    const navbar = document.querySelector('.sticky-top');
-    const navbarText = document.querySelectorAll('.navbar-text');
-    const navbarBtn = document.querySelectorAll('.navbar-btn');
-    const buttonIcon = document.querySelector('.navbar-toggler-icon');
-    const button = document.querySelector('.navbar-toggler');
-
-    if (window.pageYOffset === 0) {
-      navbar?.classList.toggle('scrolled');
-      navbarText.forEach(element => element.classList.toggle('text-scrolled'));
-      navbarBtn.forEach(element => element.classList.toggle('btn-scrolled'));
-      buttonIcon?.classList.toggle('icon-scrolled');
-      button?.classList.toggle('button-scrolled');
-    }
-
     setIsMenuOpen(!isMenuOpen);
   };
 
@@ -115,16 +88,16 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   }
 
   return (
-    <nav className={`navbar navbar-expand-lg navbar-light sticky-top${isMenuOpen ? ' scrolled' : ''}`}>
+    <nav className={`navbar navbar-expand-lg navbar-light sticky-top${isScrolled || isMenuOpen ? ' scrolled' : ''}`}>
       <div className="container">
-        <Link className={`navbar-text${isMenuOpen ? ' text-scrolled' : ''}`} to="/">
+        <Link className={`navbar-text${isScrolled ? ' text-scrolled' : ''}`} to="/">
           SM Trend
         </Link>
         <div className="d-flex order-lg-2 text-white ">
           {user ? (
             <>
-              <span className={`d-flex align-items-center fs-5 me-3 navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>Witaj: {user.username}</span>
-              <button className={`btn-user navbar-btn ${isMenuOpen ? 'btn-scrolled' : ''}`} onClick={handleLogout}>
+              <span className={`d-flex align-items-center fs-5 me-3 navbar-text${isScrolled ? ' text-scrolled' : ''}`}>Witaj: {user.username}</span>
+              <button className={`btn-user navbar-btn ${isScrolled ? 'btn-scrolled' : ''}`} onClick={handleLogout}>
                 Wyloguj
               </button>
             </>
@@ -135,7 +108,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
                   setIsModalOpen(true);
                   setModalContent('login');
                 }}
-                className={`btn-user navbar-btn ${isMenuOpen ? 'btn-scrolled' : ''}`}
+                className={`btn-user navbar-btn ${isScrolled ? 'btn-scrolled' : ''}`}
               >
                 Zaloguj
               </button>
@@ -144,7 +117,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
                   setIsModalOpen(true);
                   setModalContent('register');
                 }}
-                className={`btn-user navbar-btn ${isMenuOpen ? 'btn-scrolled' : ''}`}
+                className={`btn-user navbar-btn ${isScrolled ? 'btn-scrolled' : ''}`}
               >
                 Zarejestruj
               </button>
@@ -152,38 +125,38 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
           )}
         </div>
         <button
-          className="navbar-toggler"
+          className={`navbar-toggler${isScrolled ? ' button-scrolled' : ''}`}
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarNav"
           aria-controls="navbarNav"
-          aria-expanded="false"
+          aria-expanded={isMenuOpen ? 'true' : 'false'}
           aria-label="Toggle navigation"
           onClick={handleMenuToggle}
         >
-          <span className="navbar-toggler-icon"></span>
+          <span className={`navbar-toggler-icon${isScrolled ? ' icon-scrolled' : ''}`}></span>
         </button>
         <div className={`collapse navbar-collapse${isMenuOpen ? ' show' : ''}`} id="navbarNav">
           <ul className="navbar-nav">
             <li>
-              <Link to="/" className={`nav-link${isMenuOpen ? ' text-scrolled' : ''} nav-text navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>
+              <Link to="/" className={`nav-link nav-text navbar-text${isScrolled ? ' text-scrolled' : ''}`}>
                 <p className='text-center mb-0 btn-text'>Strona główna</p>
               </Link>
             </li>
             <li>
-              <Link to="/TopTrend" className={`nav-link${isMenuOpen ? ' text-scrolled' : ''} navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>
+              <Link to="/TopTrend" className={`nav-link nav-text navbar-text${isScrolled ? ' text-scrolled' : ''}`}>
                 <p className='text-center mb-0 btn-text'>Top Trend</p>
               </Link>
             </li>
             <li>
-            {user && (
-              <Link to="/my-profile" className={`nav-link${isMenuOpen ? ' text-scrolled' : ''} nav-text navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>
-                 <p className='text-center mb-0 btn-text'>Mój Profil</p>
-              </Link>
-            )}
+              {user && (
+                <Link to="/my-profile" className={`nav-link nav-text navbar-text${isScrolled ? ' text-scrolled' : ''}`}>
+                  <p className='text-center mb-0 btn-text'>Mój Profil</p>
+                </Link>
+              )}
             </li>
             <li>
-              <Link to="/Contact" className={`nav-link${isMenuOpen ? ' text-scrolled' : ''} navbar-text${isMenuOpen ? ' text-scrolled' : ''}`}>
+              <Link to="/Contact" className={`nav-link nav-text navbar-text${isScrolled ? ' text-scrolled' : ''}`}>
                 <p className='text-center mb-0 btn-text'>Kontakt</p>
               </Link>
             </li>
