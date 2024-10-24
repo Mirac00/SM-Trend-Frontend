@@ -3,12 +3,13 @@ import { Player } from 'video-react';
 import "video-react/dist/video-react.css"; 
 import Modal from 'react-modal';
 import { Post, PostFile } from '../../models/PostModel';
-import { FaVolumeUp, FaThumbsUp, FaThumbsDown } from 'react-icons/fa';
+import { FaVolumeUp, FaThumbsUp, FaThumbsDown, FaEdit, FaTrash } from 'react-icons/fa';
 import 'react-h5-audio-player/lib/styles.css';
 import AudioPlayer from 'react-h5-audio-player';
 import LikeDislikeComponent from './LikeDislikeComponent';
 import { PostService } from '../../services/PostService';
 import '../../style/PostComponent.css';
+import EditPostModal from './EditPostModal';
 
 interface PostComponentProps {
   filter: {
@@ -17,14 +18,25 @@ interface PostComponentProps {
   };
   userId: number;
   posts?: Post[];
+  enableEditDelete?: boolean;
+  onPostUpdated?: (updatedPost: Post) => void;
+  onPostDeleted?: (postId: number) => void;
 }
 
-const PostComponent: React.FC<PostComponentProps> = ({ filter, userId, posts: initialPosts }) => {
+const PostComponent: React.FC<PostComponentProps> = ({
+  filter,
+  userId,
+  posts: initialPosts,
+  enableEditDelete = false,
+  onPostUpdated,
+  onPostDeleted,
+}) => {
   const [posts, setPosts] = useState<Post[]>(initialPosts || []);
   const postsPerPage = 20;
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Ustawienie elementu głównego dla modalu
   useEffect(() => {
@@ -131,6 +143,34 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId, posts: in
     }
   };
 
+  const handleEditClick = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClick = async () => {
+    if (selectedPost) {
+      try {
+        await PostService.deletePost(selectedPost.id);
+        setPosts(posts.filter(post => post.id !== selectedPost.id));
+        if (onPostDeleted) {
+          onPostDeleted(selectedPost.id);
+        }
+        closeModal();
+      } catch (error) {
+        console.error('Error deleting post:', error);
+      }
+    }
+  };
+
+  const handlePostUpdated = (updatedPost: Post) => {
+    setPosts(posts.map(post => (post.id === updatedPost.id ? updatedPost : post)));
+    if (onPostUpdated) {
+      onPostUpdated(updatedPost);
+    }
+    setIsEditModalOpen(false);
+    setSelectedPost(updatedPost);
+  };
+
   return (
     <div className="container mt-3">
       <div className="row">
@@ -162,24 +202,28 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId, posts: in
         <button className="btn btn-secondary mx-2" onClick={goToNextPage} disabled={currentPage === totalPages}>Następna</button>
       </div>
 
-      <Modal
-        isOpen={!!selectedPost}
-        onRequestClose={closeModal}
-        className="modal-dialog"
-        overlayClassName="modal-overlay"
-        contentLabel="Post Modal"
-      >
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">{selectedPost?.title}</h5>
-            <button type="button" className="btn-close" onClick={closeModal} aria-label="Close"></button>
-          </div>
-          <div className="modal-body">
-            {selectedPost && (
+      {selectedPost && (
+        <Modal
+          isOpen={!!selectedPost}
+          onRequestClose={closeModal}
+          className="modal-dialog"
+          overlayClassName="modal-overlay"
+          contentLabel="Post Modal"
+        >
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">{selectedPost.title}</h5>
+              <button type="button" className="btn-close" onClick={closeModal} aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
               <div className="row">
                 <div className="col-12 mb-3">
                   {selectedPost.files && selectedPost.files.length > 0 ? (
-                    renderFileInModal(selectedPost.files[0])
+                    selectedPost.files.map((file) => (
+                      <div key={file.id} className="mb-2">
+                        {renderFileInModal(file)}
+                      </div>
+                    ))
                   ) : (
                     <p>{selectedPost.content}</p>
                   )}
@@ -192,12 +236,30 @@ const PostComponent: React.FC<PostComponentProps> = ({ filter, userId, posts: in
                     initialDislikes={selectedPost.dislikes}
                     userId={userId}
                   />
+                  {enableEditDelete && selectedPost.userId === userId && (
+                    <div className="mt-3 d-flex justify-content-end">
+                      <button className="btn btn-primary me-2" onClick={handleEditClick}>
+                        <FaEdit className="me-1" /> Edytuj
+                      </button>
+                      <button className="btn btn-danger" onClick={handleDeleteClick}>
+                        <FaTrash className="me-1" /> Usuń
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
+
+      {isEditModalOpen && selectedPost && (
+        <EditPostModal
+          post={selectedPost}
+          onClose={() => setIsEditModalOpen(false)}
+          onPostUpdated={handlePostUpdated}
+        />
+      )}
     </div>
   );
 };

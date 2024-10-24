@@ -8,7 +8,7 @@ import { Post } from '../../models/PostModel';
 const MyProfile: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [view, setView] = useState<'liked' | 'my'>('liked');
+  const [view, setView] = useState<'liked' | 'my'>('my'); // Zmieniono domyślny widok na 'my'
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -28,15 +28,12 @@ const MyProfile: React.FC = () => {
         try {
           let fetchedPosts: Post[] = [];
           if (view === 'liked') {
-            // Fetch liked posts by the user
-            console.log('Fetching liked posts for user:', user.id);
+            // Pobierz polubione posty użytkownika
             fetchedPosts = await PostService.getLikedPostsByUser(user.id);
           } else {
-            // Fetch posts created by the user
-            console.log('Fetching user posts for user:', user.id);
+            // Pobierz posty stworzone przez użytkownika
             fetchedPosts = await PostService.getPostsByUser(user.id);
           }
-          console.log('Fetched posts:', fetchedPosts);
           setPosts(fetchedPosts);
         } catch (error) {
           console.error('Error fetching posts:', error);
@@ -52,6 +49,14 @@ const MyProfile: React.FC = () => {
       await UserService.updateProfile(user.id, updatedUser);
       setUser({ ...user, ...updatedUser });
     }
+  };
+
+  const handlePostUpdated = (updatedPost: Post) => {
+    setPosts(posts.map(post => (post.id === updatedPost.id ? updatedPost : post)));
+  };
+
+  const handlePostDeleted = (postId: number) => {
+    setPosts(posts.filter(post => post.id !== postId));
   };
 
   return (
@@ -113,8 +118,15 @@ const MyProfile: React.FC = () => {
             {view === 'liked' ? 'Moje Posty' : 'Polubione Posty'}
           </button>
         </div>
-        {/* Pass the filtered posts directly to PostComponent */}
-        <PostComponent filter={{ fileType: '', searchTerm: '' }} userId={user?.id || 0} posts={posts} />
+        {/* Przekazujemy nowe propsy do PostComponent */}
+        <PostComponent
+          filter={{ fileType: '', searchTerm: '' }}
+          userId={user?.id || 0}
+          posts={posts}
+          enableEditDelete={view === 'my'} // Umożliwiamy edycję i usuwanie tylko w widoku 'my'
+          onPostUpdated={handlePostUpdated}
+          onPostDeleted={handlePostDeleted}
+        />
       </div>
     </div>
   );
