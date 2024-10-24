@@ -11,12 +11,14 @@ interface LikeDislikeComponentProps {
 const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, initialLikes, initialDislikes, userId }) => {
   const [likes, setLikes] = useState(initialLikes);
   const [dislikes, setDislikes] = useState(initialDislikes);
+  const [userLikeStatus, setUserLikeStatus] = useState<'like' | 'dislike' | null>(null);
   const [isNotLoggedIn, setIsNotLoggedIn] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('jwt');
     if (token) {
       setIsNotLoggedIn(false);
+      fetchUserLikeStatus();
     } else {
       setIsNotLoggedIn(true);
     }
@@ -27,8 +29,10 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
       const token = localStorage.getItem('jwt');
       if (token) {
         setIsNotLoggedIn(false);
+        fetchUserLikeStatus();
       } else {
         setIsNotLoggedIn(true);
+        setUserLikeStatus(null);
       }
     };
 
@@ -38,6 +42,15 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+
+  const fetchUserLikeStatus = async () => {
+    try {
+      const status = await PostService.getUserLikeStatus(postId);
+      setUserLikeStatus(status);
+    } catch (error) {
+      console.error('Error fetching user like status:', error);
+    }
+  };
 
   const updateLikesAndDislikes = async () => {
     try {
@@ -50,11 +63,16 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
   };
 
   const handleLike = async () => {
-    console.log('Attempting to like post...');
+    if (isNotLoggedIn) return;
     try {
       await PostService.likePost(postId, userId);
-      console.log('Like successful');
       await updateLikesAndDislikes();
+      // Aktualizacja statusu
+      if (userLikeStatus === 'like') {
+        setUserLikeStatus(null);
+      } else {
+        setUserLikeStatus('like');
+      }
     } catch (error: any) {
       if (error.response && error.response.status === 401) {
         setIsNotLoggedIn(true);
@@ -65,11 +83,16 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
   };
 
   const handleDislike = async () => {
-    console.log('Attempting to dislike post...');
+    if (isNotLoggedIn) return;
     try {
       await PostService.dislikePost(postId, userId);
-      console.log('Dislike successful');
       await updateLikesAndDislikes();
+      // Aktualizacja statusu
+      if (userLikeStatus === 'dislike') {
+        setUserLikeStatus(null);
+      } else {
+        setUserLikeStatus('dislike');
+      }
     } catch (error: any) {
       if (error.response && error.response.status === 401) {
         setIsNotLoggedIn(true);
@@ -86,8 +109,18 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
           Aby ocenić, zaloguj się.
         </div>
       )}
-      <button onClick={handleLike} className="btn btn-success me-2">Like ({likes})</button>
-      <button onClick={handleDislike} className="btn btn-danger">Dislike ({dislikes})</button>
+      <button
+        onClick={handleLike}
+        className={`btn me-2 ${userLikeStatus === 'like' ? 'btn-success' : 'btn-outline-success'}`}
+      >
+        Like ({likes})
+      </button>
+      <button
+        onClick={handleDislike}
+        className={`btn ${userLikeStatus === 'dislike' ? 'btn-danger' : 'btn-outline-danger'}`}
+      >
+        Dislike ({dislikes})
+      </button>
     </div>
   );
 };

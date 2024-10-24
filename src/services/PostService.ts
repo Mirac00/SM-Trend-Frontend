@@ -102,6 +102,30 @@ export const PostService = {
     }
   },
 
+  async getUserLikeStatus(postId: number): Promise<'like' | 'dislike' | null> {
+    try {
+      const token = this.getToken();
+      if (!token) throw new Error('User is not authenticated.');
+  
+      const response = await axios.get<{ isLike: boolean | null }>(`${API_URL}/${postId}/like-status`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      if (response.data.isLike === null) {
+        return null;
+      } else if (response.data.isLike) {
+        return 'like';
+      } else {
+        return 'dislike';
+      }
+    } catch (error) {
+      this.handleError(error, 'Get user like status error:');
+      return null;
+    }
+  },
+  
   async getPostById(postId: number): Promise<Post> {
     try {
       const response = await axios.get<Post>(`${API_URL}/${postId}`);
