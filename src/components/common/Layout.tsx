@@ -1,10 +1,9 @@
-// layout.tsx
-import React, { useState } from 'react';
+// Layout.tsx
+import React from 'react';
 import Navbar from './navbar';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '../../style/layoutStyle.css';
 import Slider from './slider';
-import { User } from '../../models/User';
 import Footer from './Footer';
 
 interface LayoutProps {
@@ -12,12 +11,10 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <header style={{ background: '#f5f5f5' }}>
-        <Navbar user={user} setUser={setUser} />
+        <Navbar /> {/* Nie przekazujemy już propsów */}
       </header>
       <main>
         <Slider />

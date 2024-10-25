@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AddPostService } from '../../services/AddPostService';
 import '../../style/AddPostComponent.css';
+import { useAuth } from '../../components/common/AuthContext';
 
 interface AddPostComponentProps {
   onPostAdded: () => void;
@@ -10,19 +11,34 @@ interface AddPostComponentProps {
 function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [files, setFiles] = useState<File[]>([]);
+  const [category, setCategory] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const token = window.localStorage.getItem('jwt');
   const navigate = useNavigate();
+  const { user } = useAuth(); // Używamy AuthContext
+
+  const categories = [
+    'Edukacyjne',
+    'Rozrywkowe',
+    'Inspirujące',
+    'Promocyjne',
+    'Użytkowników (UGC)',
+    'Kulturalne',
+    'Wizualne',
+    'Personalne / Zakulisowe',
+    'Interaktywne',
+    'Aktualności / Informacyjne',
+  ];
 
   const resetForm = () => {
     setTitle('');
     setContent('');
-    setFiles([]);
+    setCategory('');
+    setFile(null);
   };
 
   const handleAddPost = async () => {
-    if (!token) {
+    if (!user) {
       setErrorMessage('Zaloguj się, aby dodać post.');
       return;
     }
@@ -32,18 +48,15 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
       return;
     }
 
-    try {
-      const fileData = await Promise.all(files.map(async (file) => {
-        const arrayBuffer = await file.arrayBuffer();
-        const base64String = arrayBufferToBase64(arrayBuffer);
-        return {
-          fileName: file.name,
-          fileType: file.type,
-          fileContent: base64String
-        };
-      }));
+    if (!category.trim()) {
+      setErrorMessage('Pole kategoria jest wymagane.');
+      return;
+    }
 
-      await AddPostService.createPost({ title, content, files: fileData }, token);
+    try {
+      const fileData = file ? await processFile(file) : undefined;
+
+      await AddPostService.createPost({ title, content, category, file: fileData }, user.token);
       resetForm();
       onPostAdded();
     } catch (error) {
@@ -52,9 +65,19 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
     }
   };
 
+  const processFile = async (file: File) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const base64String = arrayBufferToBase64(arrayBuffer);
+    return {
+      fileName: file.name,
+      fileType: file.type,
+      fileContent: base64String,
+    };
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles(Array.from(e.target.files));
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
     }
   };
 
@@ -92,15 +115,49 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
           />
         </div>
         <div className="mb-3">
-          <label htmlFor="files" className="form-label">Pliki</label>
+          <label htmlFor="category" className="form-label">Kategoria</label>
+          <select
+            id="category"
+            className="form-control"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value="">-- Wybierz kategorię --</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+        <div className="mb-3">
+          <label htmlFor="file" className="form-label">Plik</label>
           <input
             type="file"
             className="form-control"
-            id="files"
-            multiple
+            id="file"
             onChange={handleFileChange}
           />
         </div>
+        {file && (
+          <div className="mb-3">
+            <label className="form-label">Podgląd pliku</label>
+            {file.type.startsWith('image/') && (
+              <img src={URL.createObjectURL(file)} alt="Preview" className="img-thumbnail" />
+            )}
+            {file.type.startsWith('video/') && (
+              <video controls className="img-thumbnail">
+                <source src={URL.createObjectURL(file)} type={file.type} />
+              </video>
+            )}
+            {file.type.startsWith('audio/') && (
+              <audio controls className="w-100">
+                <source src={URL.createObjectURL(file)} type={file.type} />
+              </audio>
+            )}
+            {!file.type.startsWith('image/') && !file.type.startsWith('video/') && !file.type.startsWith('audio/') && (
+              <p>{file.name}</p>
+            )}
+          </div>
+        )}
         {errorMessage && <p className="text-danger">{errorMessage}</p>}
         <button type="button" className="btn btn-primary" onClick={handleAddPost}>Dodaj</button>
       </form>

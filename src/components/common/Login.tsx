@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { User } from '../../models/User';
 import { AuthenticateRequest } from '../../models/AuthenticateRequest';
 import { UserService } from '../../services/UserService';
+import { useAuth } from '../../components/common/AuthContext';
 
 interface LoginProps {
-  setUser: (user: User | null) => void;
   closeModal: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ setUser, closeModal }) => {
+const Login: React.FC<LoginProps> = ({ closeModal }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const navigate = useNavigate();
+  const { setUser } = useAuth(); // Używamy useAuth()
 
   const handleLogin = async () => {
     const request: AuthenticateRequest = {
@@ -23,10 +22,8 @@ const Login: React.FC<LoginProps> = ({ setUser, closeModal }) => {
     const user: User | null = await UserService.authenticate(request);
 
     if (user) {
-      window.localStorage.setItem('jwt', user.token);
-      setUser(user);
+      setUser(user); // Aktualizujemy stan użytkownika
       closeModal();
-      window.dispatchEvent(new Event('storage'));
     } else {
       alert('Nieprawidłowy login lub hasło');
     }

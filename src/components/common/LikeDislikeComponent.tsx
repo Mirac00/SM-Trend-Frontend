@@ -1,47 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { PostService } from '../../services/PostService';
+import { useAuth } from '../../components/common/AuthContext';
 
 interface LikeDislikeComponentProps {
   postId: number;
   initialLikes: number;
   initialDislikes: number;
-  userId: number;
+  onLikesUpdated?: (likes: number, dislikes: number) => void;
 }
 
-const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, initialLikes, initialDislikes, userId }) => {
+const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, initialLikes, initialDislikes, onLikesUpdated }) => {
   const [likes, setLikes] = useState(initialLikes);
   const [dislikes, setDislikes] = useState(initialDislikes);
   const [userLikeStatus, setUserLikeStatus] = useState<'like' | 'dislike' | null>(null);
   const [isNotLoggedIn, setIsNotLoggedIn] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
-    const token = localStorage.getItem('jwt');
-    if (token) {
+    if (user) {
       setIsNotLoggedIn(false);
       fetchUserLikeStatus();
     } else {
       setIsNotLoggedIn(true);
+      setUserLikeStatus(null);
     }
-  }, []);
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const token = localStorage.getItem('jwt');
-      if (token) {
-        setIsNotLoggedIn(false);
-        fetchUserLikeStatus();
-      } else {
-        setIsNotLoggedIn(true);
-        setUserLikeStatus(null);
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
+  }, [user]);
 
   const fetchUserLikeStatus = async () => {
     try {
@@ -57,6 +40,9 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
       const updatedPost = await PostService.getPostById(postId);
       setLikes(updatedPost.likes);
       setDislikes(updatedPost.dislikes);
+      if (onLikesUpdated) {
+        onLikesUpdated(updatedPost.likes, updatedPost.dislikes);
+      }
     } catch (error) {
       console.error('Error updating likes and dislikes:', error);
     }
@@ -65,7 +51,7 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
   const handleLike = async () => {
     if (isNotLoggedIn) return;
     try {
-      await PostService.likePost(postId, userId);
+      await PostService.likePost(postId);
       await updateLikesAndDislikes();
       // Aktualizacja statusu
       if (userLikeStatus === 'like') {
@@ -85,7 +71,7 @@ const LikeDislikeComponent: React.FC<LikeDislikeComponentProps> = ({ postId, ini
   const handleDislike = async () => {
     if (isNotLoggedIn) return;
     try {
-      await PostService.dislikePost(postId, userId);
+      await PostService.dislikePost(postId);
       await updateLikesAndDislikes();
       // Aktualizacja statusu
       if (userLikeStatus === 'dislike') {

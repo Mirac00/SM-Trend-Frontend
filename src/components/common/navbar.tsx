@@ -2,18 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import '../../style/navbarStyle.css';
-import { User } from '../../models/User';
 import Modal from 'react-modal';
 import Login from './Login';
 import Register from './Register';
+import { useAuth } from '../../components/common/AuthContext';
 import { UserService } from '../../services/UserService';
 
-interface NavbarProps {
-  user: User | null;
-  setUser: (user: User | null) => void;
-}
-
-const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
+const Navbar: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(true);
@@ -21,6 +16,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { user, setUser } = useAuth(); // Używamy AuthContext
 
   useEffect(() => {
     const checkUser = async () => {
@@ -35,9 +31,9 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
           setIsSessionExpired(false); // Użytkownik wylogował się ręcznie
         }
       } else {
-        const user: User | null = await UserService.getUserByToken(jwt);
-        if (user) {
-          setUser(user);
+        const fetchedUser = await UserService.getUserByToken(jwt);
+        if (fetchedUser) {
+          setUser(fetchedUser);
           setIsSessionExpired(false);
           window.localStorage.removeItem('loggedOut'); // Usuwamy flagę po zalogowaniu
         } else {
@@ -107,11 +103,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
         <Link className={`navbar-text${isScrolled ? ' text-scrolled' : ''}`} to="/">
           SM Trend
         </Link>
-        <div className="d-flex order-lg-2 text-white ">
+        <div className={`d-flex order-lg-2${isScrolled ? ' text-scrolled' : ' text-white'}`}>
           {user ? (
             <>
               <span className={`d-flex align-items-center fs-5 me-3 navbar-text${isScrolled ? ' text-scrolled' : ''}`}>Witaj: {user.username}</span>
-              <button className={`btn-user navbar-btn ${isScrolled ? 'btn-scrolled' : ''}`} onClick={handleLogout}>
+              <button className={`btn-user navbar-btn${isScrolled ? ' btn-scrolled' : ''}`} onClick={handleLogout}>
                 Wyloguj
               </button>
             </>
@@ -122,7 +118,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
                   setIsModalOpen(true);
                   setModalContent('login');
                 }}
-                className={`btn-user navbar-btn ${isScrolled ? 'btn-scrolled' : ''}`}
+                className={`btn-user navbar-btn${isScrolled ? ' btn-scrolled' : ''}`}
               >
                 Zaloguj
               </button>
@@ -131,7 +127,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
                   setIsModalOpen(true);
                   setModalContent('register');
                 }}
-                className={`btn-user navbar-btn ${isScrolled ? 'btn-scrolled' : ''}`}
+                className={`btn-user navbar-btn${isScrolled ? ' btn-scrolled' : ''}`}
               >
                 Zarejestruj
               </button>
@@ -190,7 +186,7 @@ const Navbar: React.FC<NavbarProps> = ({ user, setUser }) => {
               onClick={closeModal}
             ></button>
             {modalContent === 'login' ? (
-              <Login setUser={setUser} closeModal={closeModal} />
+              <Login closeModal={closeModal} />
             ) : (
               <Register setIsModalOpen={setIsModalOpen} />
             )}

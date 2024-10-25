@@ -21,6 +21,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (jwt) {
         const fetchedUser = await UserService.getUserByToken(jwt);
         setUser(fetchedUser);
+      } else {
+        setUser(null); // Ustawiamy user na null, gdy token nie istnieje
       }
     };
 

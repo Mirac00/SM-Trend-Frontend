@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Post } from '../../models/PostModel';
+import { Post, PostFile } from '../../models/PostModel';
 import { PostService } from '../../services/PostService';
-import { FaVolumeUp } from 'react-icons/fa'; // Import icon
-import { Player } from 'video-react';
-import 'video-react/dist/video-react.css'; // Import video-react styles
-import 'react-h5-audio-player/lib/styles.css'; // Import styles for the audio player
+import 'react-h5-audio-player/lib/styles.css';
 import AudioPlayer from 'react-h5-audio-player';
+import { useAuth } from '../../components/common/AuthContext';
 
 interface TopTrendProps {}
 
 const TopTrend: React.FC<TopTrendProps> = () => {
   const [topPosts, setTopPosts] = useState<Post[]>([]);
+  const { user } = useAuth(); // Używamy AuthContext
 
   useEffect(() => {
     const fetchTopPosts = async () => {
@@ -26,23 +25,33 @@ const TopTrend: React.FC<TopTrendProps> = () => {
     fetchTopPosts();
   }, []);
 
-  const isLoggedIn = !!localStorage.getItem('jwt'); // Check if user is logged in
+  const handleDownload = async (postId: number, fileId: number, fileName: string) => {
+    try {
+      const blob = await PostService.getFileContentForDownload(postId, fileId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  };
 
-  const renderFile = (file: Post['files'][0]) => {
+  const renderFile = (postId: number, file: PostFile) => {
     if (!file) return null;
 
     if (file.fileType.startsWith('image/')) {
       return (
         <div key={file.id} className="mb-3">
-          <p><strong>File Name:</strong> {file.fileName}</p>
-          <p><strong>File Type:</strong> {file.fileType}</p>
-          <img src={file.fileUrl} alt={file.fileName} className="img-fluid" />
-          {!file.fileType.startsWith('image/') && (
-            isLoggedIn ? (
-              <a href={file.fileUrl} download={file.fileName} className="btn btn-primary">Download</a>
-            ) : (
-              <p>You must be logged in to download files.</p>
-            )
+          <img src={`${PostService.API_URL}/${postId}/files/${file.id}/content`} alt={file.fileName} className="img-fluid" />
+          {user ? (
+            <button onClick={() => handleDownload(postId, file.id, file.fileName)} className="btn btn-primary mt-2">Pobierz</button>
+          ) : (
+            <p>Aby pobrać plik, zaloguj się</p>
           )}
         </div>
       );
@@ -51,19 +60,13 @@ const TopTrend: React.FC<TopTrendProps> = () => {
     if (file.fileType.startsWith('video/')) {
       return (
         <div key={file.id} className="mb-3">
-          <p><strong>File Name:</strong> {file.fileName}</p>
-          <p><strong>File Type:</strong> {file.fileType}</p>
-          <div className="video-container">
-            <Player>
-              <source src={file.fileUrl} />
-            </Player>
-          </div>
-          {!file.fileType.startsWith('video/') && (
-            isLoggedIn ? (
-              <a href={file.fileUrl} download={file.fileName} className="btn btn-primary">Download</a>
-            ) : (
-              <p>You must be logged in to download files.</p>
-            )
+          <video controls className="img-fluid">
+            <source src={`${PostService.API_URL}/${postId}/files/${file.id}/content`} type={file.fileType} />
+          </video>
+          {user ? (
+            <button onClick={() => handleDownload(postId, file.id, file.fileName)} className="btn btn-primary mt-2">Pobierz</button>
+          ) : (
+            <p>Aby pobrać plik, zaloguj się</p>
           )}
         </div>
       );
@@ -72,38 +75,27 @@ const TopTrend: React.FC<TopTrendProps> = () => {
     if (file.fileType.startsWith('audio/')) {
       return (
         <div key={file.id} className="mb-3">
-          <p><strong>File Name:</strong> {file.fileName}</p>
-          <p><strong>File Type:</strong> {file.fileType}</p>
-          <div className="audio-container">
-            <AudioPlayer
-              src={file.fileUrl}
-              onPlay={() => console.log("onPlay")}
-              // other props here
-            />
-          </div>
-          {!file.fileType.startsWith('audio/') && (
-            isLoggedIn ? (
-              <a href={file.fileUrl} download={file.fileName} className="btn btn-primary">Download</a>
-            ) : (
-              <p>You must be logged in to download files.</p>
-            )
+          <AudioPlayer
+            src={`${PostService.API_URL}/${postId}/files/${file.id}/content`}
+            onPlay={() => console.log("onPlay")}
+          />
+          {user ? (
+            <button onClick={() => handleDownload(postId, file.id, file.fileName)} className="btn btn-primary mt-2">Pobierz</button>
+          ) : (
+            <p>Aby pobrać plik, zaloguj się</p>
           )}
         </div>
       );
     }
 
-    // Default case if file type is not recognized
+    // Domyślna obsługa dla nieznanych typów plików
     return (
       <div key={file.id} className="mb-3">
-        <p><strong>File Name:</strong> {file.fileName}</p>
-        <p><strong>File Type:</strong> {file.fileType}</p>
-        <p>File type not supported</p>
-        {!file.fileType.startsWith('image/') && !file.fileType.startsWith('video/') && !file.fileType.startsWith('audio/') && (
-          isLoggedIn ? (
-            <a href={file.fileUrl} download={file.fileName} className="btn btn-primary">Download</a>
-          ) : (
-            <p>You must be logged in to download files.</p>
-          )
+        <p>Nieobsługiwany typ pliku</p>
+        {user ? (
+          <button onClick={() => handleDownload(postId, file.id, file.fileName)} className="btn btn-primary mt-2">Pobierz</button>
+        ) : (
+          <p>Aby pobrać plik, zaloguj się</p>
         )}
       </div>
     );
@@ -114,9 +106,9 @@ const TopTrend: React.FC<TopTrendProps> = () => {
       <div className="container mt-3">
         <div className="row">
           <div className="col">
-            <h3 className="mb-4 text-center">Top 10 Most Liked Posts</h3>
+            <h3 className="mb-4 text-center">Top 10 Najbardziej Lajkowanych Postów</h3>
             {topPosts.length === 0 ? (
-              <p className="text-center">No posts available</p>
+              <p className="text-center">Brak dostępnych postów</p>
             ) : (
               <ol className="list-group list-group-numbered">
                 {topPosts.map((post, index) => (
@@ -124,17 +116,17 @@ const TopTrend: React.FC<TopTrendProps> = () => {
                     <div className="d-flex justify-content-between align-items-center">
                       <h4 className="mb-1">{index + 1}. {post.title}</h4>
                       <div>
-                        <span className="badge bg-primary rounded-pill me-2">Likes: {post.likes}</span>
-                        <span className="badge bg-secondary rounded-pill">Dislikes: {post.dislikes}</span>
+                        <span className="badge bg-primary rounded-pill me-2">Lajki: {post.likes}</span>
+                        <span className="badge bg-secondary rounded-pill">Dislajki: {post.dislikes}</span>
                       </div>
                     </div>
                     <p>{post.content}</p>
-                    <p><strong>Author:</strong> {post.user.firstName} {post.user.lastName}</p>
+                    <p><strong>Autor:</strong> {post.user.firstName} {post.user.lastName}</p>
                     {post.files && post.files.length > 0 && (
                       <div>
-                        <h5>Files:</h5>
+                        <h5>Plik:</h5>
                         <div>
-                          {post.files.map((file) => renderFile(file))}
+                          {post.files.map((file) => renderFile(post.id, file))}
                         </div>
                       </div>
                     )}

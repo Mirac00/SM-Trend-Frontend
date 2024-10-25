@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import PostComponent from '../common/PostComponent';
 import AddPostComponent from '../common/AddPostComponent';
 import FilterComponent from '../common/FilterComponent';
+import { useAuth } from '../../components/common/AuthContext';
 
 /**
  * Komponent reprezentujący stronę główną aplikacji.
@@ -11,7 +12,7 @@ import FilterComponent from '../common/FilterComponent';
 function Home() {
   const [updatePosts, setUpdatePosts] = useState(false);
   const [filter, setFilter] = useState({ fileType: '', searchTerm: '' });
-  const userId = 1; // Załóżmy, że mamy userId
+  const { user } = useAuth();
 
   /**
    * Obsługa dodania nowego posta.
@@ -33,9 +34,9 @@ function Home() {
         <div className="grid">
           <div className="row">
             <div className="col">
-              <AddPostComponent onPostAdded={handlePostAdded} />
+              {user && <AddPostComponent onPostAdded={handlePostAdded} />}
               <FilterComponent onFilterChange={handleFilterChange} />
-              <PostComponent key={updatePosts ? 'updatePostsKey' : null} filter={filter} userId={userId} />
+              <PostComponent key={updatePosts ? 'updatePostsKey' : null} filter={filter} userId={user?.id} />
             </div>
           </div>
         </div>

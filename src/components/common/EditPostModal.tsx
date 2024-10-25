@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from 'react-modal';
-import { Post, PostFile } from '../../models/PostModel';
+import { Post } from '../../models/PostModel';
 import { PostService } from '../../services/PostService';
 
 interface EditPostModalProps {
@@ -12,39 +12,61 @@ interface EditPostModalProps {
 const EditPostModal: React.FC<EditPostModalProps> = ({ post, onClose, onPostUpdated }) => {
   const [title, setTitle] = useState(post.title);
   const [content, setContent] = useState(post.content);
-  const [files, setFiles] = useState<PostFile[]>(post.files || []);
-  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [category, setCategory] = useState(post.category || '');
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [currentFile, setCurrentFile] = useState(post.files && post.files.length > 0 ? post.files[0] : null);
+  const [fileRemoved, setFileRemoved] = useState(false);
+  const [removedFileId, setRemovedFileId] = useState<number | null>(null);
+
+  // Definiujemy listę kategorii i upewniamy się, że obecna kategoria jest w niej zawarta
+  const predefinedCategories = ['Technologia', 'Nauka', 'Sztuka', 'Muzyka', 'Sport'];
+  const categories = predefinedCategories.includes(post.category) ? predefinedCategories : [post.category, ...predefinedCategories];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setNewFiles(Array.from(e.target.files));
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) { // 5 MB
+        alert('Plik jest za duży. Maksymalny rozmiar to 5 MB.');
+        return;
+      }
+      setNewFile(file);
+    } else {
+      setNewFile(null);
     }
   };
 
-  const handleFileRemove = (fileId: number) => {
-    setFiles(files.filter(f => f.id !== fileId));
+  const handleFileRemove = () => {
+    if (currentFile) {
+      setRemovedFileId(currentFile.id);
+    }
+    setCurrentFile(null);
+    setFileRemoved(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Aktualizacja posta bez plików
-      await PostService.updatePost(post.id, { title, content });
-
-      // Usunięcie plików z posta
-      const filesToRemove = post.files.filter(f => !files.find(file => file.id === f.id));
-      for (const file of filesToRemove) {
-        await PostService.removeFileFromPost(post.id, file.id);
+      let fileData = undefined;
+      if (newFile) {
+        const base64Content = await PostService.convertFileToBase64(newFile);
+        fileData = {
+          fileName: newFile.name,
+          fileType: newFile.type,
+          fileContent: base64Content,
+        };
       }
 
-      // Dodanie nowych plików
-      for (const file of newFiles) {
-        await PostService.addFileToPost(post.id, file);
+      const updatedPostData = { title, content, category, file: fileData };
+
+      await PostService.updatePost(post.id, updatedPostData);
+
+      // Jeśli plik został usunięty, usuń go również na backendzie
+      if (fileRemoved && removedFileId !== null) {
+        await PostService.removeFileFromPost(post.id, removedFileId);
       }
 
-      // Pobranie zaktualizowanego posta
+      // Pobierz zaktualizowany post
       const updatedPost = await PostService.getPostById(post.id);
-
       onPostUpdated(updatedPost);
     } catch (error) {
       console.error('Error updating post:', error);
@@ -88,29 +110,37 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, onClose, onPostUpda
               />
             </div>
             <div className="mb-3">
-              <label className="form-label">Aktualne pliki:</label>
-              {files.length > 0 ? (
-                files.map(file => (
-                  <div key={file.id} className="d-flex align-items-center mb-2">
-                    <span>{file.fileName}</span>
-                    <button type="button" className="btn btn-danger btn-sm ms-2" onClick={() => handleFileRemove(file.id)}>
-                      Usuń
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p>Brak plików</p>
-              )}
+              <label htmlFor="category" className="form-label">Kategoria</label>
+              <select
+                id="category"
+                className="form-select"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+              >
+                <option value="">Wybierz kategorię</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
             <div className="mb-3">
-              <label htmlFor="files" className="form-label">Dodaj nowe pliki:</label>
-              <input
-                type="file"
-                id="files"
-                className="form-control"
-                multiple
-                onChange={handleFileChange}
-              />
+              {currentFile && !fileRemoved ? (
+                <div>
+                  <p>Obecny plik: {currentFile.fileName}</p>
+                  <button type="button" className="btn btn-danger" onClick={handleFileRemove}>Usuń plik</button>
+                </div>
+              ) : (
+                <div>
+                  <label htmlFor="file" className="form-label">Nowy Plik (max 5 MB)</label>
+                  <input
+                    type="file"
+                    id="file"
+                    className="form-control"
+                    onChange={handleFileChange}
+                  />
+                </div>
+              )}
             </div>
             <div className="d-flex justify-content-end">
               <button type="button" className="btn btn-secondary me-2" onClick={onClose}>Anuluj</button>

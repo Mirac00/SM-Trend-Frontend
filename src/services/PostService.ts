@@ -4,8 +4,10 @@ import { Post, PostFile } from '../models/PostModel';
 const API_URL = 'https://localhost:44352/Posts';
 
 export const PostService = {
+  API_URL: API_URL,
+
   /**
-   * Fetch all posts.
+   * Pobierz wszystkie posty.
    */
   async getAllPosts(): Promise<Post[]> {
     try {
@@ -18,21 +20,24 @@ export const PostService = {
   },
 
   /**
-   * Fetch filtered posts based on file type and search term.
+   * Pobierz przefiltrowane posty na podstawie typu pliku i wyszukiwanego terminu.
    */
   async getFilteredPosts(fileType: string, searchTerm: string): Promise<Post[]> {
     try {
-      const params = { fileType, searchTerm };
-      const response = await axios.get<Post[]>(`${API_URL}/filter`, { params });
+      const params = {
+        fileType: fileType || '',
+        searchTerm: searchTerm || '',
+      };
+      const response = await axios.get<Post[]>(`${API_URL}/filtered`, { params });
       return response.data;
     } catch (error) {
       this.handleError(error, 'Get filtered posts error:');
-      return [];
+      throw error;
     }
   },
 
   /**
-   * Fetch posts created by a specific user.
+   * Pobierz posty utworzone przez określonego użytkownika.
    */
   async getPostsByUser(userId: number): Promise<Post[]> {
     try {
@@ -49,13 +54,13 @@ export const PostService = {
 
       return response.data;
     } catch (error) {
-      console.error('Error fetching user posts:', error);
+      this.handleError(error, 'Get posts by user error:');
       throw error;
     }
   },
 
   /**
-   * Fetch posts liked by a specific user.
+   * Pobierz posty polubione przez określonego użytkownika.
    */
   async getLikedPostsByUser(userId: number): Promise<Post[]> {
     try {
@@ -72,22 +77,90 @@ export const PostService = {
 
       return response.data;
     } catch (error) {
-      console.error('Error fetching liked posts:', error);
+      this.handleError(error, 'Get liked posts by user error:');
       throw error;
     }
   },
 
   /**
-   * Like a post.
+   * Pobierz pojedynczy post po ID.
    */
-  async likePost(postId: number, userId: number): Promise<void> {
+  async getPostById(postId: number): Promise<Post> {
+    try {
+      const response = await axios.get<Post>(`${API_URL}/${postId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Get post by ID error:');
+      throw error;
+    }
+  },
+
+  /**
+   * Pobierz miniaturkę pliku (obraz) dla danego posta i pliku.
+   */
+  async getFileThumbnail(postId: number, fileId: number): Promise<string> {
+    try {
+      const response = await axios.get(`${API_URL}/${postId}/files/${fileId}/thumbnail`, {
+        responseType: 'blob',
+      });
+      const url = URL.createObjectURL(response.data);
+      return url;
+    } catch (error) {
+      this.handleError(error, 'Get file thumbnail error:');
+      throw error;
+    }
+  },
+
+  /**
+   * Pobierz zawartość pliku do wyświetlenia (bez pobierania).
+   */
+  async getFileContentForView(postId: number, fileId: number): Promise<Blob> {
+    try {
+      const response = await axios.get(`${API_URL}/${postId}/files/${fileId}/content`, {
+        responseType: 'blob',
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Get file content for view error:');
+      throw error;
+    }
+  },
+
+  /**
+   * Pobierz zawartość pliku do pobrania.
+   */
+  async getFileContentForDownload(postId: number, fileId: number): Promise<Blob> {
+    try {
+      const token = this.getToken();
+      if (!token) {
+        throw new Error('User is not authenticated');
+      }
+  
+      const response = await axios.get(`${API_URL}/${postId}/files/${fileId}/download`, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Get file content for download error:');
+      throw error;
+    }
+  },
+  
+
+  /**
+   * Polub post.
+   */
+  async likePost(postId: number): Promise<void> {
     try {
       const token = this.getToken();
       if (!token) throw new Error('User is not authenticated.');
 
       await axios.post(
-        `${API_URL}/like`,
-        { postId, userId },
+        `${API_URL}/${postId}/like`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -96,20 +169,21 @@ export const PostService = {
       );
     } catch (error) {
       this.handleError(error, 'Like post error:');
+      throw error;
     }
   },
 
   /**
-   * Dislike a post.
+   * Odrzuć post.
    */
-  async dislikePost(postId: number, userId: number): Promise<void> {
+  async dislikePost(postId: number): Promise<void> {
     try {
       const token = this.getToken();
       if (!token) throw new Error('User is not authenticated.');
 
       await axios.post(
-        `${API_URL}/dislike`,
-        { postId, userId },
+        `${API_URL}/${postId}/dislike`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -118,11 +192,12 @@ export const PostService = {
       );
     } catch (error) {
       this.handleError(error, 'Dislike post error:');
+      throw error;
     }
   },
 
   /**
-   * Get the like/dislike status of the current user for a specific post.
+   * Pobierz status polubienia użytkownika dla danego posta.
    */
   async getUserLikeStatus(postId: number): Promise<'like' | 'dislike' | null> {
     try {
@@ -149,57 +224,30 @@ export const PostService = {
   },
 
   /**
-   * Fetch a single post by its ID.
+   * Utwórz nowy post z opcjonalnym plikiem.
    */
-  async getPostById(postId: number): Promise<Post> {
-    try {
-      const response = await axios.get<Post>(`${API_URL}/${postId}`);
-      return response.data;
-    } catch (error) {
-      this.handleError(error, 'Get post by ID error:');
-      return {} as Post;
-    }
-  },
-
-  /**
-   * Fetch the top liked posts.
-   */
-  async getTopLikedPosts(): Promise<Post[]> {
-    try {
-      const response = await axios.get<Post[]>(`${API_URL}/top-liked`);
-      return response.data;
-    } catch (error) {
-      this.handleError(error, 'Get top liked posts error:');
-      return [];
-    }
-  },
-
-  /**
-   * Create a new post with optional files.
-   */
-  async createPost(postData: { title: string; content: string; files: File[] }): Promise<Post> {
+  async createPost(postData: { title: string; content: string; category: string; file?: File }): Promise<Post> {
     try {
       const token = this.getToken();
       if (!token) throw new Error('User is not authenticated.');
 
-      // Convert files to base64
-      const filesData = await Promise.all(
-        postData.files.map(async (file) => {
-          const base64Content = await this.convertFileToBase64(file);
-          return {
-            fileName: file.name,
-            fileType: file.type,
-            fileContent: base64Content,
-          };
-        })
-      );
+      let fileData = undefined;
+      if (postData.file) {
+        const base64Content = await this.convertFileToBase64(postData.file);
+        fileData = {
+          fileName: postData.file.name,
+          fileType: postData.file.type,
+          fileContent: base64Content,
+        };
+      }
 
       const response = await axios.post<Post>(
         API_URL,
         {
           title: postData.title,
           content: postData.content,
-          files: filesData,
+          category: postData.category,
+          file: fileData,
         },
         {
           headers: {
@@ -216,9 +264,9 @@ export const PostService = {
   },
 
   /**
-   * Update an existing post.
+   * Zaktualizuj istniejący post.
    */
-  async updatePost(postId: number, updatedPost: Partial<Post>): Promise<Post> {
+  async updatePost(postId: number, updatedPost: { title: string; content: string; category: string; file?: { fileName: string; fileType: string; fileContent: string } }): Promise<Post> {
     try {
       const token = this.getToken();
       if (!token) throw new Error('User is not authenticated.');
@@ -240,7 +288,7 @@ export const PostService = {
   },
 
   /**
-   * Delete a post.
+   * Usuń post.
    */
   async deletePost(postId: number): Promise<void> {
     try {
@@ -259,24 +307,23 @@ export const PostService = {
   },
 
   /**
-   * Add a file to a post.
+   * Dodaj plik do istniejącego posta.
    */
   async addFileToPost(postId: number, file: File): Promise<void> {
     try {
       const token = this.getToken();
       if (!token) throw new Error('User is not authenticated.');
 
-      const fileContent = await this.convertFileToBase64(file);
-
-      const postFileRequest = {
+      const base64Content = await this.convertFileToBase64(file);
+      const fileData = {
         fileName: file.name,
         fileType: file.type,
-        fileContent: fileContent,
+        fileContent: base64Content,
       };
 
       await axios.post(
         `${API_URL}/${postId}/files`,
-        postFileRequest,
+        fileData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -290,7 +337,7 @@ export const PostService = {
   },
 
   /**
-   * Remove a file from a post.
+   * Usuń plik z posta.
    */
   async removeFileFromPost(postId: number, fileId: number): Promise<void> {
     try {
@@ -309,14 +356,28 @@ export const PostService = {
   },
 
   /**
-   * Convert a File object to a base64 string.
+   * Pobierz top 10 najbardziej lubianych postów.
+   */
+  async getTopLikedPosts(): Promise<Post[]> {
+    try {
+        const response = await axios.get<Post[]>(`${API_URL}/top-liked`);
+        return response.data;
+    } catch (error) {
+        this.handleError(error, 'Get top liked posts error:');
+        throw error;
+    }
+},
+
+
+  /**
+   * Konwertuj obiekt File na base64.
    */
   async convertFileToBase64(file: File): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        // Remove the 'data:*/*;base64,' prefix
+        // Usunięcie prefiksu 'data:*/*;base64,'
         const base64 = result.split(',')[1];
         resolve(base64);
       };
@@ -326,18 +387,14 @@ export const PostService = {
   },
 
   /**
-   * Retrieve the JWT token from local storage.
+   * Pobierz token JWT z localStorage.
    */
   getToken(): string | null {
-    const token = localStorage.getItem('jwt');
-    if (!token) {
-      console.error('User is not authenticated.');
-    }
-    return token;
+    return localStorage.getItem('jwt');
   },
 
   /**
-   * Handle errors from Axios requests.
+   * Obsłuż błędy z żądań Axios.
    */
   handleError(error: unknown, message: string): void {
     if (axios.isAxiosError(error)) {

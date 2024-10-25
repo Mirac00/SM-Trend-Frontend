@@ -13,6 +13,15 @@
   pointer-events: none;
 }
 
+/* Stylizacja dla miniatur wideo w kafelkach */
+.post-tile video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  aspect-ratio: 16/9;
+}
+
 /* Stylizacja dla modalu, aby centrować go na ekranie */
 .modal-overlay {
   position: fixed;
@@ -29,30 +38,37 @@
 
 /* Dostosowanie szerokości i wysokości modalu */
 .modal-dialog {
-  width: 50%;
-  max-width: none;
+  width: 90%;
+  max-width: 500px;
   margin: 0 auto;
   height: auto;
+  display: flex;
+  flex-direction: column;
 }
 
-@media (max-width: 768px) {
-  .modal-dialog {
-    width: 90%;
-    margin: 0 auto;
-    height: auto;
-  }
-}
-
+/* Modal content styling */
 .modal-content {
   background-color: #fff;
   border-radius: 0.3rem;
   padding: 2rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Dostosowanie kontenera wideo */
+/* Obrazek lub wideo maksymalnie szerokie w modalnym oknie */
+.modal-content img,
+.modal-content video {
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Dostosowanie kontenera wideo dla pełnowymiarowego wyświetlania */
 .video-container {
   position: relative;
-  padding-bottom: 56.25%; /* Proporcje 16:9 */
+  padding-bottom: 56.25%;
   height: 0;
   overflow: hidden;
 }
@@ -63,4 +79,144 @@
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+/* Wyłączenie interakcji z mediami w modalnym oknie */
+.modal-content img,
+.modal-content video,
+.modal-content audio {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Zapobieganie wyświetlaniu menu kontekstowego na mediach */
+.modal-content img,
+.modal-content video,
+.modal-content audio {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Ukrycie przycisku pobierania w kontrolkach wideo */
+.modal-content video::-internal-media-controls-download-button {
+  display: none;
+}
+
+.modal-content video::-webkit-media-controls-enclosure {
+  overflow: hidden;
+}
+/* Dodatkowe style dla efektu hover na kartach */
+.post-tile {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.post-tile:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Ukrycie interakcji z obrazkami */
+.no-download {
+  pointer-events: none;
+}
+
+/* Stylizacja dla miniatur wideo w kafelkach */
+.post-tile video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  aspect-ratio: 16/9;
+}
+
+/* Stylizacja dla modalu, aby centrować go na ekranie */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dostosowanie szerokości i wysokości modalu */
+.modal-dialog {
+  width: 90%;
+  max-width: 500px;
+  margin: 0 auto;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Modal content styling */
+.modal-content {
+  background-color: #fff;
+  border-radius: 0.3rem;
+  padding: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Obrazek lub wideo maksymalnie szerokie w modalnym oknie */
+.modal-content img,
+.modal-content video {
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Dostosowanie kontenera wideo dla pełnowymiarowego wyświetlania */
+.video-container {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+}
+
+.video-container .video-react {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Wyłączenie interakcji z mediami w modalnym oknie */
+.modal-content img,
+.modal-content video,
+.modal-content audio {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Zapobieganie wyświetlaniu menu kontekstowego na mediach */
+.modal-content img,
+.modal-content video,
+.modal-content audio {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Ukrycie przycisku pobierania w kontrolkach wideo */
+.modal-content video::-internal-media-controls-download-button {
+  display: none;
+}
+
+.modal-content video::-webkit-media-controls-enclosure {
+  overflow: hidden;
 }
