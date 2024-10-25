@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AddPostService } from '../../services/AddPostService';
 import '../../style/AddPostComponent.css';
-import { useAuth } from '../../components/common/AuthContext';
 
 interface AddPostComponentProps {
   onPostAdded: () => void;
@@ -14,8 +13,8 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
   const [category, setCategory] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const token = window.localStorage.getItem('jwt');
   const navigate = useNavigate();
-  const { user } = useAuth(); // Używamy AuthContext
 
   const categories = [
     'Edukacyjne',
@@ -38,7 +37,7 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
   };
 
   const handleAddPost = async () => {
-    if (!user) {
+    if (!token) {
       setErrorMessage('Zaloguj się, aby dodać post.');
       return;
     }
@@ -56,7 +55,7 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
     try {
       const fileData = file ? await processFile(file) : undefined;
 
-      await AddPostService.createPost({ title, content, category, file: fileData }, user.token);
+      await AddPostService.createPost({ title, content, category, file: fileData }, token);
       resetForm();
       onPostAdded();
     } catch (error) {
