@@ -78,13 +78,6 @@
   transition: background-color 0.3s ease;
 }
 
-/* Stylizacja popupu sesji */
-.popup-sesion-over {
-  position: absolute;
-  top: 4em;
-  right: 3em;
-  left: 3em;
-}
 
 /* Stylizacja modala */
 .modal-dialog-centered {

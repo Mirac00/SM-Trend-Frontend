@@ -13,7 +13,6 @@ const Navbar: React.FC = () => {
   const [modalContent, setModalContent] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSessionExpired, setIsSessionExpired] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const { user, setUser } = useAuth(); // Używamy AuthContext
@@ -26,19 +25,19 @@ const Navbar: React.FC = () => {
       if (!jwt) {
         setUser(null);
         if (!loggedOut) {
-          setIsSessionExpired(true); // Token wygasł samoczynnie
+          // Sesja mogła wygasnąć wcześniej, ale AuthProvider obsłużył alert
         } else {
-          setIsSessionExpired(false); // Użytkownik wylogował się ręcznie
+          // Użytkownik wylogował się ręcznie
+          window.localStorage.removeItem('loggedOut'); // Usuwamy flagę po wylogowaniu
         }
       } else {
         const fetchedUser = await UserService.getUserByToken(jwt);
         if (fetchedUser) {
           setUser(fetchedUser);
-          setIsSessionExpired(false);
           window.localStorage.removeItem('loggedOut'); // Usuwamy flagę po zalogowaniu
         } else {
           setUser(null);
-          setIsSessionExpired(true); // Token jest nieprawidłowy lub wygasł
+          // Token jest nieprawidłowy lub wygasł; AuthProvider już obsłużył alert
         }
       }
       setIsLoading(false);
@@ -81,7 +80,6 @@ const Navbar: React.FC = () => {
     window.localStorage.removeItem('jwt');
     window.localStorage.setItem('loggedOut', 'true'); // Ustawiamy flagę, że użytkownik wylogował się ręcznie
     setUser(null);
-    setIsSessionExpired(false);
     window.dispatchEvent(new Event('storage'));
   };
 
@@ -192,14 +190,6 @@ const Navbar: React.FC = () => {
             )}
           </div>
         </Modal>
-        {isSessionExpired && (
-          <div className="popup bg-white p-3 border border-dark rounded text-center mx-auto popup-session-over">
-            <div className="popup-inner">
-              <p>Twoja sesja wygasła. Zaloguj się ponownie.</p>
-              <button onClick={() => setIsSessionExpired(false)} className="close-popup">&#10006;</button>
-            </div>
-          </div>
-        )}
       </div>
     </nav>
   );
