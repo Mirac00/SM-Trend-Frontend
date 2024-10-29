@@ -66,7 +66,7 @@ const MyProfile: React.FC = () => {
 
   return (
     <div className="container mt-3">
-      <h2>Mój Profil</h2>
+      <h2 className="mt-2 text-success">Mój Profil</h2>
       <div className="profile-section">
         <h3>Aktualizuj swoje dane</h3>
         <form onSubmit={(e) => { e.preventDefault(); handleUpdateProfile({ ...user }); }}>

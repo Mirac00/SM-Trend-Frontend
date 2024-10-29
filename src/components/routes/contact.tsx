@@ -2,19 +2,18 @@ import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import ContactForm from '../common/ContactForm';
 
+
 /**
  * Komponent reprezentujący stronę kontaktową.
  * Umożliwia wysyłanie zapytań do serwisu.
  */
 function Contact() {
   return (
-    <div className="container mt-3">
-      <div className="grid">
-        <div className="row">
-          <div className="col rounded bg-white">
-            <h2 className="m-3">Tutaj możesz wysłać zapytanie do serwisu</h2>
-            <ContactForm />
-          </div>
+    <div className="container mt-5">
+      <div className="row justify-content-center">
+        <div className="col-md-8 rounded bg-light p-4 shadow">
+          <h2 className="mb-4 text-success">Tutaj możesz wysłać zapytanie do serwisu</h2>
+          <ContactForm />
         </div>
       </div>
     </div>

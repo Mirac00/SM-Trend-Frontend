@@ -1,3 +1,11 @@
 .add-post{
     box-shadow: 0 0 10px blueviolet;
+    background-color: hsla(0, 0%, 13%, 1) !important;
+}
+
+h3{
+    color:green;
+}
+.form-label{
+    color:yellow;
 }
