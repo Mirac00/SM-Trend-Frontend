@@ -1,3 +1,4 @@
+// UserService.ts
 import axios from 'axios';
 import { User } from '../models/User';
 import { AuthenticateRequest } from '../models/AuthenticateRequest';
@@ -12,11 +13,13 @@ export const UserService = {
    */
   async getUserByToken(token: string): Promise<User | null> {
     try {
+      console.log('Sending getUserByToken request with token:', token);
       const response = await axios.get<User>(`${API_URL}/GetUserByToken`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log('getUserByToken response:', response.data);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response && error.response.status === 401) {
@@ -40,6 +43,7 @@ export const UserService = {
    */
   async authenticate(request: AuthenticateRequest): Promise<User | null> {
     try {
+      console.log('Sending authenticate request with:', request);
       const response = await axios.post<User>(`${API_URL}/authenticate`, request);
       const user = response.data;
 
@@ -47,6 +51,7 @@ export const UserService = {
       localStorage.setItem('jwt', user.token);
       window.dispatchEvent(new Event('storage')); // Powiadamiamy AuthContext
 
+      console.log('User authenticated:', user);
       return user;
     } catch (error) {
       console.error('Błąd podczas uwierzytelniania:', error);
@@ -60,7 +65,9 @@ export const UserService = {
    */
   async register(user: User): Promise<void> {
     try {
+      console.log('Sending register request with user:', user);
       await axios.post(`${API_URL}/register`, user);
+      console.log('User registered successfully:', user);
     } catch (error) {
       console.error('Błąd podczas rejestracji:', error);
     }
@@ -78,17 +85,20 @@ export const UserService = {
         throw new Error('User is not authenticated.');
       }
 
+      console.log(`Sending updateProfile request for user ID ${userId} with data:`, updatedUser);
       await axios.put(`${API_URL}/${userId}/update-profile`, updatedUser, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log(`User profile updated for ID ${userId}:`, updatedUser);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error('Błąd podczas aktualizacji profilu:', error);
+        console.error('Błąd podczas aktualizacji profilu:', error.response?.data || error.message);
       } else {
         console.error('Nieoczekiwany błąd podczas aktualizacji profilu:', error);
       }
+      throw error; // Rzucenie błędu, aby można było go obsłużyć w komponencie
     }
   },
 
@@ -98,7 +108,9 @@ export const UserService = {
    */
   async getAll(): Promise<User[]> {
     try {
+      console.log('Sending getAllUsers request');
       const response = await axios.get<User[]>(API_URL);
+      console.log('Fetched all users:', response.data);
       return response.data;
     } catch (error) {
       console.error('Błąd podczas pobierania wszystkich użytkowników:', error);
@@ -113,7 +125,9 @@ export const UserService = {
    */
   async getById(id: number): Promise<User | null> {
     try {
+      console.log(`Sending getById request for user ID ${id}`);
       const response = await axios.get<User>(`${API_URL}/${id}`);
+      console.log(`Fetched user by ID ${id}:`, response.data);
       return response.data;
     } catch (error) {
       console.error(`Błąd podczas pobierania użytkownika o id ${id}:`, error);
@@ -132,17 +146,53 @@ export const UserService = {
         throw new Error('User is not authenticated.');
       }
 
+      console.log(`Sending delete request for user ID ${id}`);
       await axios.delete(`${API_URL}/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log(`User deleted with ID ${id}`);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error(`Błąd podczas usuwania użytkownika o id ${id}:`, error);
+        console.error(`Błąd podczas usuwania użytkownika o id ${id}:`, error.response?.data || error.message);
       } else {
         console.error('Nieoczekiwany błąd podczas usuwania użytkownika:', error);
       }
+      throw error; // Rzucenie błędu, aby można było go obsłużyć w komponencie
+    }
+  },
+
+  /**
+   * Odświeża token JWT.
+   * @returns Nowy token JWT lub null, jeśli odświeżenie nie powiodło się.
+   */
+  async refreshToken(): Promise<string | null> {
+    try {
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        console.error('No token available to refresh.');
+        return null;
+      }
+
+      console.log('Sending refreshToken request with token:', token);
+
+      const response = await axios.post<{ token: string }>(`${API_URL}/RefreshToken`, null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const newToken = response.data.token;
+      console.log('Received new token from API:', newToken);
+      return newToken;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error refreshing token:', error.response?.data || error.message);
+      } else {
+        console.error('Unexpected error refreshing token:', error);
+      }
+      return null;
     }
   },
 };

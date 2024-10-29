@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { Post, PostFile } from '../../models/PostModel';
 import { FaVolumeUp, FaThumbsUp, FaThumbsDown, FaEdit, FaTrash, FaVideo } from 'react-icons/fa';
@@ -8,7 +8,6 @@ import LikeDislikeComponent from './LikeDislikeComponent';
 import { PostService } from '../../services/PostService';
 import '../../style/PostComponent.css';
 import EditPostModal from './EditPostModal';
-import { useAuth } from '../../components/common/AuthContext';
 
 interface PostComponentProps {
   filter: {
@@ -37,8 +36,9 @@ const PostComponent: React.FC<PostComponentProps> = ({
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [fileUrls, setFileUrls] = useState<{ [key: number]: string }>({});
-  const { user } = useAuth(); // Używamy AuthContext
-  const isLoggedIn = !!user;
+  const isLoggedIn = !!window.localStorage.getItem('jwt');
+  // Usuń poniższą linię, ponieważ powoduje błąd
+  // const sortedPosts = postsData.sort((a: Post, b: Post) => b.id - a.id);
 
   useEffect(() => {
     Modal.setAppElement('#root');
@@ -291,7 +291,7 @@ const PostComponent: React.FC<PostComponentProps> = ({
                       )}
                     </div>
                   )}
-                  {enableEditDelete && selectedPost.userId === user?.id && (
+                  {enableEditDelete && selectedPost.userId === userId && (
                     <div className="mt-3 d-flex justify-content-end">
                       <button className="btn btn-primary me-2" onClick={handleEditClick}>
                         <FaEdit className="me-1" /> Edytuj

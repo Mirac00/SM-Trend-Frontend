@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Importujemy useNavigate
 import { UserService } from '../../services/UserService';
 import { PostService } from '../../services/PostService';
 import PostComponent from '../common/PostComponent';
 import { User } from '../../models/User';
 import { Post } from '../../models/PostModel';
-import { useAuth } from '../../components/common/AuthContext';
 
 const MyProfile: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [view, setView] = useState<'liked' | 'my'>('my');
-  const { user, setUser } = useAuth(); // Używamy AuthContext
-  const navigate = useNavigate(); // Inicjalizujemy useNavigate
+  const [view, setView] = useState<'liked' | 'my'>('my'); // Zmieniono domyślny widok na 'my'
 
   useEffect(() => {
-    if (!user) {
-      // Jeśli user jest null (wylogowany), przekieruj na stronę główną
-      navigate('/');
-    }
-  }, [user, navigate]);
+    const fetchUserProfile = async () => {
+      const jwt = localStorage.getItem('jwt');
+      if (jwt) {
+        const fetchedUser = await UserService.getUserByToken(jwt);
+        setUser(fetchedUser);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -26,8 +28,10 @@ const MyProfile: React.FC = () => {
         try {
           let fetchedPosts: Post[] = [];
           if (view === 'liked') {
+            // Pobierz polubione posty użytkownika
             fetchedPosts = await PostService.getLikedPostsByUser(user.id);
           } else {
+            // Pobierz posty stworzone przez użytkownika
             fetchedPosts = await PostService.getPostsByUser(user.id);
           }
           setPosts(fetchedPosts);
@@ -55,60 +59,57 @@ const MyProfile: React.FC = () => {
     setPosts(posts.filter(post => post.id !== postId));
   };
 
-  if (!user) {
-    // Możemy zwrócić null lub loader, ale dzięki useEffect użytkownik zostanie przekierowany
-    return null;
-  }
-
   return (
     <div className="container mt-3">
       <h2>Mój Profil</h2>
-      <div className="profile-section">
-        <h3>Aktualizuj swoje dane</h3>
-        <form onSubmit={(e) => { e.preventDefault(); handleUpdateProfile({ ...user }); }}>
-          <div className="mb-3">
-            <label htmlFor="username" className="form-label">Nazwa użytkownika</label>
-            <input
-              type="text"
-              id="username"
-              className="form-control"
-              value={user.username}
-              onChange={(e) => setUser({ ...user, username: e.target.value })}
-            />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="firstName" className="form-label">Imię</label>
-            <input
-              type="text"
-              id="firstName"
-              className="form-control"
-              value={user.firstName}
-              onChange={(e) => setUser({ ...user, firstName: e.target.value })}
-            />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="lastName" className="form-label">Nazwisko</label>
-            <input
-              type="text"
-              id="lastName"
-              className="form-control"
-              value={user.lastName}
-              onChange={(e) => setUser({ ...user, lastName: e.target.value })}
-            />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="password" className="form-label">Hasło</label>
-            <input
-              type="password"
-              id="password"
-              className="form-control"
-              autoComplete="current-password"
-              onChange={(e) => setUser({ ...user, password: e.target.value })}
-            />
-          </div>
-          <button type="submit" className="btn btn-primary">Aktualizuj</button>
-        </form>
-      </div>
+      {user && (
+        <div className="profile-section">
+          <h3>Aktualizuj swoje dane</h3>
+          <form onSubmit={(e) => { e.preventDefault(); handleUpdateProfile({ ...user }); }}>
+            <div className="mb-3">
+              <label htmlFor="username" className="form-label">Username</label>
+              <input
+                type="text"
+                id="username"
+                className="form-control"
+                value={user.username}
+                onChange={(e) => setUser({ ...user, username: e.target.value })}
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="firstName" className="form-label">Imię</label>
+              <input
+                type="text"
+                id="firstName"
+                className="form-control"
+                value={user.firstName}
+                onChange={(e) => setUser({ ...user, firstName: e.target.value })}
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="lastName" className="form-label">Nazwisko</label>
+              <input
+                type="text"
+                id="lastName"
+                className="form-control"
+                value={user.lastName}
+                onChange={(e) => setUser({ ...user, lastName: e.target.value })}
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label">Hasło</label>
+              <input
+                type="password"
+                id="password"
+                className="form-control"
+                autoComplete="current-password"
+                onChange={(e) => setUser({ ...user, password: e.target.value })}
+              />
+            </div>
+            <button type="submit" className="btn btn-primary">Aktualizuj</button>
+          </form>
+        </div>
+      )}
 
       <div className="posts-section mt-4">
         <div className="d-flex justify-content-between align-items-center mb-3">
@@ -117,11 +118,12 @@ const MyProfile: React.FC = () => {
             {view === 'liked' ? 'Moje Posty' : 'Polubione Posty'}
           </button>
         </div>
+        {/* Przekazujemy nowe propsy do PostComponent */}
         <PostComponent
           filter={{ fileType: '', searchTerm: '' }}
-          userId={user.id}
+          userId={user?.id || 0}
           posts={posts}
-          enableEditDelete={view === 'my'}
+          enableEditDelete={view === 'my'} // Umożliwiamy edycję i usuwanie tylko w widoku 'my'
           onPostUpdated={handlePostUpdated}
           onPostDeleted={handlePostDeleted}
         />
