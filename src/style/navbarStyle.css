@@ -9,7 +9,7 @@
 
 .sticky-top.scrolled {
   border-bottom: 3px solid rgb(51, 8, 59);
-  background-color: rgb(255, 255, 255);
+  background-color: hsla(0, 0%, 13%, 1);
 }
 
 /* Stylizacja tekstu w navbarze */
@@ -20,7 +20,7 @@
 }
 
 .text-scrolled {
-  color: rgb(0, 0, 0) !important; /* Po przewinięciu czarna */
+  color: rgb(255, 255, 255) !important; /* Po przewinięciu czarna */
 }
 
 /* Stylizacja przycisków */
@@ -36,8 +36,8 @@
 }
 
 .btn-scrolled {
-  color: black !important;
-  border: 1px solid black !important;
+  color: rgb(255, 255, 255) !important;
+  border: 1px solid rgb(255, 255, 255) !important;
 }
 
 .btn-user:hover {
@@ -52,7 +52,7 @@
 }
 
 .icon-scrolled {
-  filter: invert(0); /* Po przewinięciu czarna */
+  filter: invert(1); /* Po przewinięciu czarna */
 }
 
 .navbar-toggler {
@@ -61,7 +61,7 @@
 }
 
 .button-scrolled {
-  border: 1px solid black !important;
+  border: 1px solid rgb(255, 255, 255) !important;
 }
 
 /* Stylizacja tekstu przycisków w nawigacji */
