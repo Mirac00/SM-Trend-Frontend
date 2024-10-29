@@ -1,3 +1,4 @@
+// src/components/common/Navbar.tsx
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
@@ -104,7 +105,9 @@ const Navbar: React.FC = () => {
         <div className={`d-flex order-lg-2${isScrolled ? ' text-scrolled' : ' text-white'}`}>
           {user ? (
             <>
-              <span className={`d-flex align-items-center fs-5 me-3 navbar-text${isScrolled ? ' text-scrolled' : ''}`}>Witaj: {user.username}</span>
+              <span className={`d-flex align-items-center fs-5 me-3 navbar-text${isScrolled ? ' text-scrolled' : ''}`}>
+                Witaj: {user.username}
+              </span>
               <button className={`btn-user navbar-btn${isScrolled ? ' btn-scrolled' : ''}`} onClick={handleLogout}>
                 Wyloguj
               </button>
@@ -148,24 +151,29 @@ const Navbar: React.FC = () => {
           <ul className="navbar-nav">
             <li>
               <Link to="/" className={`nav-link nav-text navbar-text${isScrolled ? ' text-scrolled' : ''}`}>
-                <p className='text-center mb-0 btn-text'>Strona główna</p>
+                <p className="text-center mb-0 btn-text">Strona główna</p>
               </Link>
             </li>
             <li>
               <Link to="/TopTrend" className={`nav-link nav-text navbar-text${isScrolled ? ' text-scrolled' : ''}`}>
-                <p className='text-center mb-0 btn-text'>Top Trend</p>
+                <p className="text-center mb-0 btn-text">Top Trend</p>
               </Link>
             </li>
             <li>
               {user && (
                 <Link to="/my-profile" className={`nav-link nav-text navbar-text${isScrolled ? ' text-scrolled' : ''}`}>
-                  <p className='text-center mb-0 btn-text'>Mój Profil</p>
+                  <p className="text-center mb-0 btn-text">Mój Profil</p>
                 </Link>
               )}
             </li>
             <li>
               <Link to="/Contact" className={`nav-link nav-text navbar-text${isScrolled ? ' text-scrolled' : ''}`}>
-                <p className='text-center mb-0 btn-text'>Kontakt</p>
+                <p className="text-center mb-0 btn-text">Kontakt</p>
+              </Link>
+            </li>
+            <li>
+              <Link to="/regulamin" className={`nav-link nav-text navbar-text${isScrolled ? ' text-scrolled' : ''}`}>
+                <p className="text-center mb-0 btn-text">Regulamin</p>
               </Link>
             </li>
           </ul>
@@ -177,12 +185,7 @@ const Navbar: React.FC = () => {
           overlayClassName="modal-overlay"
         >
           <div className="modal-content">
-            <button
-              type="button"
-              className="btn-close m-2"
-              aria-label="Close"
-              onClick={closeModal}
-            ></button>
+            <button type="button" className="btn-close m-2" aria-label="Close" onClick={closeModal}></button>
             {modalContent === 'login' ? (
               <Login closeModal={closeModal} />
             ) : (
