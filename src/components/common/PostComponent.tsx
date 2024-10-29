@@ -4,6 +4,7 @@ import { Post, PostFile } from '../../models/PostModel';
 import { FaVolumeUp, FaThumbsUp, FaThumbsDown, FaEdit, FaTrash, FaVideo } from 'react-icons/fa';
 import 'react-h5-audio-player/lib/styles.css';
 import AudioPlayer from 'react-h5-audio-player';
+import ReactPlayer from 'react-player';
 import LikeDislikeComponent from './LikeDislikeComponent';
 import { PostService } from '../../services/PostService';
 import '../../style/PostComponent.css';
@@ -37,8 +38,6 @@ const PostComponent: React.FC<PostComponentProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [fileUrls, setFileUrls] = useState<{ [key: number]: string }>({});
   const isLoggedIn = !!window.localStorage.getItem('jwt');
-  // Usuń poniższą linię, ponieważ powoduje błąd
-  // const sortedPosts = postsData.sort((a: Post, b: Post) => b.id - a.id);
 
   useEffect(() => {
     Modal.setAppElement('#root');
@@ -62,7 +61,7 @@ const PostComponent: React.FC<PostComponentProps> = ({
     if (!initialPosts) {
       fetchPosts();
     }
-  }, [filter]);
+  }, [filter, initialPosts, postsPerPage]);
 
   useEffect(() => {
     if (initialPosts) {
@@ -70,7 +69,7 @@ const PostComponent: React.FC<PostComponentProps> = ({
       setPosts(sortedPosts);
       setTotalPages(Math.ceil(sortedPosts.length / postsPerPage));
     }
-  }, [initialPosts]);
+  }, [initialPosts, postsPerPage]);
 
   const displayedPosts = posts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage);
 
@@ -114,9 +113,19 @@ const PostComponent: React.FC<PostComponentProps> = ({
     if (file.fileType.startsWith('video/')) {
       return (
         <div className="video-container">
-          <video controls className="img-fluid modal-media" controlsList="nodownload">
-            <source src={fileUrl} type={file.fileType} />
-          </video>
+          <ReactPlayer
+            url={fileUrl}
+            controls
+            width="100%"
+            height="100%"
+            config={{
+              file: {
+                attributes: {
+                  controlsList: 'nodownload',
+                },
+              },
+            }}
+          />
         </div>
       );
     }
@@ -223,7 +232,11 @@ const PostComponent: React.FC<PostComponentProps> = ({
       <div className="row">
         {displayedPosts.map((post) => (
           <div key={post.id} className="col-md-3 mb-3">
-            <div className="card h-100 post-tile" onClick={() => handleTileClick(post)} style={{ cursor: 'pointer' }}>
+            <div
+              className="card h-100 post-tile"
+              onClick={() => handleTileClick(post)}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="card-body d-flex flex-column align-items-center">
                 <h5 className="card-title text-center">{truncateText(post.title, 15)}</h5>
                 <p className="card-text text-center">{truncateText(post.content, 30)}</p>
@@ -249,8 +262,8 @@ const PostComponent: React.FC<PostComponentProps> = ({
         <Modal
           isOpen={!!selectedPost}
           onRequestClose={closeModal}
-          className="modal-dialog"
-          overlayClassName="modal-overlay"
+          className="custom-modal-content"
+          overlayClassName="custom-modal-overlay"
           contentLabel="Post Modal"
         >
           <div className="modal-content">
