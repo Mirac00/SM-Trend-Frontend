@@ -1,3 +1,4 @@
+// Home.tsx
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import PostComponent from '../common/PostComponent';
@@ -11,7 +12,7 @@ import { useAuth } from '../../components/common/AuthContext';
  */
 function Home() {
   const [updatePosts, setUpdatePosts] = useState(false);
-  const [filter, setFilter] = useState({ fileType: '', searchTerm: '' });
+  const [filter, setFilter] = useState({ fileType: '', searchTerm: '', sortOption: 'latest' });
   const { user } = useAuth();
 
   /**
@@ -24,8 +25,8 @@ function Home() {
   /**
    * Obsługa zmiany filtra.
    */
-  const handleFilterChange = (filter: { fileType: string; searchTerm: string }) => {
-    setFilter(filter);
+  const handleFilterChange = (newFilter: { fileType: string; searchTerm: string; sortOption: string }) => {
+    setFilter(newFilter);
   };
 
   return (
@@ -36,7 +37,11 @@ function Home() {
             <div className="col">
               {user && <AddPostComponent onPostAdded={handlePostAdded} />}
               <FilterComponent onFilterChange={handleFilterChange} />
-              <PostComponent key={updatePosts ? 'updatePostsKey' : null} filter={filter} userId={user?.id} />
+              <PostComponent
+                key={updatePosts ? 'updatePostsKey' : null}
+                filter={filter}
+                userId={user?.id}
+              />
             </div>
           </div>
         </div>

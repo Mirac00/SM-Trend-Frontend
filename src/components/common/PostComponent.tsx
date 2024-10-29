@@ -1,3 +1,4 @@
+// PostComponent.tsx
 import React, { useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { Post, PostFile } from '../../models/PostModel';
@@ -14,6 +15,7 @@ interface PostComponentProps {
   filter: {
     fileType: string;
     searchTerm: string;
+    sortOption: string;
   };
   userId?: number;
   posts?: Post[];
@@ -50,9 +52,29 @@ const PostComponent: React.FC<PostComponentProps> = ({
           ? await PostService.getFilteredPosts(filter.fileType, filter.searchTerm)
           : await PostService.getAllPosts();
 
-        const sortedPosts = postsData.sort((a, b) => b.id - a.id);
+        let sortedPosts = [...postsData];
+
+        // Sortowanie według wybranej opcji
+        switch (filter.sortOption) {
+          case 'latest':
+            sortedPosts.sort((a, b) => b.id - a.id);
+            break;
+          case 'highestRated':
+            sortedPosts.sort((a, b) => b.likes - a.likes);
+            break;
+          case 'lowestRated':
+            sortedPosts.sort((a, b) => a.likes - b.likes);
+            break;
+          case 'alphabetical':
+            sortedPosts.sort((a, b) => a.title.localeCompare(b.title));
+            break;
+          default:
+            sortedPosts.sort((a, b) => b.id - a.id);
+        }
+
         setPosts(sortedPosts);
         setTotalPages(Math.ceil(sortedPosts.length / postsPerPage));
+        setCurrentPage(1); // Resetowanie do pierwszej strony po zmianie filtra/sortowania
       } catch (error) {
         console.error('Error fetching posts:', error);
       }
@@ -65,11 +87,31 @@ const PostComponent: React.FC<PostComponentProps> = ({
 
   useEffect(() => {
     if (initialPosts) {
-      const sortedPosts = initialPosts.sort((a, b) => b.id - a.id);
+      let sortedPosts = [...initialPosts];
+
+      // Sortowanie według wybranej opcji
+      switch (filter.sortOption) {
+        case 'latest':
+          sortedPosts.sort((a, b) => b.id - a.id);
+          break;
+        case 'highestRated':
+          sortedPosts.sort((a, b) => b.likes - a.likes);
+          break;
+        case 'lowestRated':
+          sortedPosts.sort((a, b) => a.likes - b.likes);
+          break;
+        case 'alphabetical':
+          sortedPosts.sort((a, b) => a.title.localeCompare(b.title));
+          break;
+        default:
+          sortedPosts.sort((a, b) => b.id - a.id);
+      }
+
       setPosts(sortedPosts);
       setTotalPages(Math.ceil(sortedPosts.length / postsPerPage));
+      setCurrentPage(1); // Resetowanie do pierwszej strony po zmianie filtra/sortowania
     }
-  }, [initialPosts, postsPerPage]);
+  }, [initialPosts, filter.sortOption, postsPerPage]);
 
   const displayedPosts = posts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage);
 

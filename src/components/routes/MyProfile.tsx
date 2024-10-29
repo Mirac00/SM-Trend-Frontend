@@ -1,3 +1,4 @@
+// MyProfile.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../components/common/AuthContext'; // Upewnij się, że ścieżka jest poprawna
 import { PostService } from '../../services/PostService';
@@ -11,6 +12,7 @@ const MyProfile: React.FC = () => {
   const { user, setUser } = useAuth(); // Korzystanie z AuthContext
   const [posts, setPosts] = useState<Post[]>([]);
   const [view, setView] = useState<'liked' | 'my'>('my'); // Domyślny widok na 'my'
+  const [filter, setFilter] = useState({ fileType: '', searchTerm: '', sortOption: 'latest' }); // Dodany sortOption
   const navigate = useNavigate(); // Inicjalizacja useNavigate
 
   useEffect(() => {
@@ -121,7 +123,7 @@ const MyProfile: React.FC = () => {
         </div>
         {/* Przekazujemy nowe propsy do PostComponent */}
         <PostComponent
-          filter={{ fileType: '', searchTerm: '' }}
+          filter={filter}
           userId={user.id}
           posts={posts}
           enableEditDelete={view === 'my'} // Umożliwiamy edycję i usuwanie tylko w widoku 'my'
