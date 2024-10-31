@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Modal from 'react-modal';
 import { Post } from '../../models/PostModel';
 import { PostService } from '../../services/PostService';
+import '../../style/editpostStyle.css';
 
 interface EditPostModalProps {
   post: Post;
@@ -14,18 +15,19 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, onClose, onPostUpda
   const [content, setContent] = useState(post.content);
   const [category, setCategory] = useState(post.category || '');
   const [newFile, setNewFile] = useState<File | null>(null);
+  const [customFileName, setCustomFileName] = useState('');
   const [currentFile, setCurrentFile] = useState(post.files && post.files.length > 0 ? post.files[0] : null);
   const [fileRemoved, setFileRemoved] = useState(false);
-  const [removedFileId, setRemovedFileId] = useState<number | null>(null);
 
-  // Definiujemy listę kategorii i upewniamy się, że obecna kategoria jest w niej zawarta
   const predefinedCategories = ['Technologia', 'Nauka', 'Sztuka', 'Muzyka', 'Sport'];
-  const categories = predefinedCategories.includes(post.category) ? predefinedCategories : [post.category, ...predefinedCategories];
+  const categories = predefinedCategories.includes(post.category)
+    ? predefinedCategories
+    : [post.category, ...predefinedCategories];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) { // 5 MB
+      if (file.size > 5 * 1024 * 1024) {
         alert('Plik jest za duży. Maksymalny rozmiar to 5 MB.');
         return;
       }
@@ -36,9 +38,6 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, onClose, onPostUpda
   };
 
   const handleFileRemove = () => {
-    if (currentFile) {
-      setRemovedFileId(currentFile.id);
-    }
     setCurrentFile(null);
     setFileRemoved(true);
   };
@@ -50,22 +49,15 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, onClose, onPostUpda
       if (newFile) {
         const base64Content = await PostService.convertFileToBase64(newFile);
         fileData = {
-          fileName: newFile.name,
+          fileName: customFileName || newFile.name,
           fileType: newFile.type,
           fileContent: base64Content,
         };
       }
 
       const updatedPostData = { title, content, category, file: fileData };
-
       await PostService.updatePost(post.id, updatedPostData);
 
-      // Jeśli plik został usunięty, usuń go również na backendzie
-      if (fileRemoved && removedFileId !== null) {
-        await PostService.removeFileFromPost(post.id, removedFileId);
-      }
-
-      // Pobierz zaktualizowany post
       const updatedPost = await PostService.getPostById(post.id);
       onPostUpdated(updatedPost);
     } catch (error) {
@@ -77,8 +69,8 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, onClose, onPostUpda
     <Modal
       isOpen={true}
       onRequestClose={onClose}
-      className="modal-dialog"
-      overlayClassName="modal-overlay"
+      className="modal-dialog-centered"
+      overlayClassName="modal fade show d-block"
       contentLabel="Edit Post Modal"
     >
       <div className="modal-content">
@@ -86,10 +78,10 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, onClose, onPostUpda
           <h5 className="modal-title">Edytuj Post</h5>
           <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
         </div>
-        <div className="modal-body">
-          <form onSubmit={handleSubmit} encType="multipart/form-data">
+        <form onSubmit={handleSubmit} encType="multipart/form-data">
+          <div className="modal-body">
             <div className="mb-3">
-              <label htmlFor="title" className="form-label">Tytuł</label>
+              <label htmlFor="title" className="form-label" style={{ color: 'black' }}>Tytuł</label>
               <input
                 type="text"
                 id="title"
@@ -100,7 +92,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, onClose, onPostUpda
               />
             </div>
             <div className="mb-3">
-              <label htmlFor="content" className="form-label">Treść</label>
+              <label htmlFor="content" className="form-label" style={{ color: 'black' }}>Treść</label>
               <textarea
                 id="content"
                 className="form-control"
@@ -110,7 +102,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, onClose, onPostUpda
               />
             </div>
             <div className="mb-3">
-              <label htmlFor="category" className="form-label">Kategoria</label>
+              <label htmlFor="category" className="form-label" style={{ color: 'black' }}>Kategoria</label>
               <select
                 id="category"
                 className="form-select"
@@ -132,7 +124,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, onClose, onPostUpda
                 </div>
               ) : (
                 <div>
-                  <label htmlFor="file" className="form-label">Nowy Plik (max 5 MB)</label>
+                  <label htmlFor="file" className="form-label" style={{ color: 'black' }}>Nowy Plik (max 5 MB)</label>
                   <input
                     type="file"
                     id="file"
@@ -141,13 +133,47 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, onClose, onPostUpda
                   />
                 </div>
               )}
+              {newFile && (
+                <div className="mt-2">
+                  <label htmlFor="customFileName" className="form-label" style={{ color: 'black' }}>Nazwa pliku</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="customFileName"
+                    placeholder="Podaj nazwę pliku"
+                    value={customFileName}
+                    onChange={(e) => setCustomFileName(e.target.value)}
+                  />
+                </div>
+              )}
+              {newFile && (
+                <div className="mb-3">
+                  <label className="form-label" style={{ color: 'black' }}>Podgląd pliku</label>
+                  {newFile.type.startsWith('image/') && (
+                    <img src={URL.createObjectURL(newFile)} alt="Preview" className="img-thumbnail" />
+                  )}
+                  {newFile.type.startsWith('video/') && (
+                    <video controls className="img-thumbnail">
+                      <source src={URL.createObjectURL(newFile)} type={newFile.type} />
+                    </video>
+                  )}
+                  {newFile.type.startsWith('audio/') && (
+                    <audio controls className="w-100">
+                      <source src={URL.createObjectURL(newFile)} type={newFile.type} />
+                    </audio>
+                  )}
+                  {!newFile.type.startsWith('image/') && !newFile.type.startsWith('video/') && !newFile.type.startsWith('audio/') && (
+                    <p>{newFile.name}</p>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="d-flex justify-content-end">
-              <button type="button" className="btn btn-secondary me-2" onClick={onClose}>Anuluj</button>
-              <button type="submit" className="btn btn-primary">Zapisz</button>
-            </div>
-          </form>
-        </div>
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>Anuluj</button>
+            <button type="submit" className="btn btn-primary">Zapisz</button>
+          </div>
+        </form>
       </div>
     </Modal>
   );

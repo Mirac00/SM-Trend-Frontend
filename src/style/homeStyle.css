@@ -6,4 +6,27 @@
     align-items: center;
     color: white;
   }
-  
+/* Stylizacja głównego kontenera i kolumny filtrów */
+.filter-column {
+  position: fixed;
+  top: 50%;
+  left: 20px;
+  width: 20%;
+  box-shadow: 0 0 10px blueviolet;
+  padding: 10px;
+}
+
+.main-column {
+  margin-left: 25%; /* Dostosowanie odstępu dla głównej kolumny na desktopie */
+}
+
+@media (max-width: 768px) {
+  .filter-column {
+    position: static;
+    width: 100%;
+  }
+
+  .main-column {
+    margin-left: 0;
+  }
+}

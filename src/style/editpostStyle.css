@@ -1,0 +1,4 @@
+.modal-dialog-centered {
+    min-height: fit-content !important;
+    max-height: fit-content !important;
+  }
