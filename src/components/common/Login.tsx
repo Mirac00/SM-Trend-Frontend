@@ -33,7 +33,7 @@ const Login: React.FC<LoginProps> = ({ closeModal }) => {
     <div className="container">
       <form>
         <div className="mb-3">
-          <label htmlFor="username" className="form-label">Login</label>
+          <label htmlFor="username" className="form-label text-black">Login</label>
           <input
             type="text"
             className="form-control"
@@ -43,7 +43,7 @@ const Login: React.FC<LoginProps> = ({ closeModal }) => {
           />
         </div>
         <div className="mb-3">
-          <label htmlFor="password" className="form-label">Hasło</label>
+          <label htmlFor="password" className="form-label text-black">Hasło</label>
           <input
             type="password"
             className="form-control"
