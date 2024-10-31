@@ -1,4 +1,3 @@
-// PostComponent.tsx
 import React, { useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { Post, PostFile } from '../../models/PostModel';
@@ -54,7 +53,6 @@ const PostComponent: React.FC<PostComponentProps> = ({
 
         let sortedPosts = [...postsData];
 
-        // Sortowanie według wybranej opcji
         switch (filter.sortOption) {
           case 'latest':
             sortedPosts.sort((a, b) => b.id - a.id);
@@ -74,7 +72,7 @@ const PostComponent: React.FC<PostComponentProps> = ({
 
         setPosts(sortedPosts);
         setTotalPages(Math.ceil(sortedPosts.length / postsPerPage));
-        setCurrentPage(1); // Resetowanie do pierwszej strony po zmianie filtra/sortowania
+        setCurrentPage(1);
       } catch (error) {
         console.error('Error fetching posts:', error);
       }
@@ -89,7 +87,6 @@ const PostComponent: React.FC<PostComponentProps> = ({
     if (initialPosts) {
       let sortedPosts = [...initialPosts];
 
-      // Sortowanie według wybranej opcji
       switch (filter.sortOption) {
         case 'latest':
           sortedPosts.sort((a, b) => b.id - a.id);
@@ -109,7 +106,7 @@ const PostComponent: React.FC<PostComponentProps> = ({
 
       setPosts(sortedPosts);
       setTotalPages(Math.ceil(sortedPosts.length / postsPerPage));
-      setCurrentPage(1); // Resetowanie do pierwszej strony po zmianie filtra/sortowania
+      setCurrentPage(1);
     }
   }, [initialPosts, filter.sortOption, postsPerPage]);
 
@@ -284,6 +281,9 @@ const PostComponent: React.FC<PostComponentProps> = ({
                 <p className="card-text text-center">{truncateText(post.content, 30)}</p>
                 {renderFileThumbnail(post)}
                 <p className="text-muted mt-2">Typ pliku: {post.files && post.files.length > 0 ? post.files[0].fileType : 'Brak plików'}</p>
+                {post.files && post.files.length > 0 && (
+                  <p className="text-muted">Nazwa pliku: {post.files[0].fileName}</p>
+                )}
                 <div className="d-flex justify-content-center align-items-center mt-2">
                   <FaThumbsUp className={`me-1 ${post.likes > 0 ? 'text-success' : ''}`} /> {post.likes}
                   <FaThumbsDown className={`ms-3 me-1 ${post.dislikes > 0 ? 'text-danger' : ''}`} /> {post.dislikes}
@@ -319,6 +319,7 @@ const PostComponent: React.FC<PostComponentProps> = ({
                   {selectedPost.files && selectedPost.files.length > 0 ? (
                     selectedPost.files.map((file) => (
                       <div key={file.id} className="mb-2">
+                        <p><strong>Nazwa pliku:</strong> {file.fileName}</p>
                         {renderFileInModal(file)}
                       </div>
                     ))

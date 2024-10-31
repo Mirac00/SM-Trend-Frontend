@@ -12,21 +12,15 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [customFileName, setCustomFileName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const token = window.localStorage.getItem('jwt');
   const navigate = useNavigate();
 
   const categories = [
-    'Edukacyjne',
-    'Rozrywkowe',
-    'Inspirujące',
-    'Promocyjne',
-    'Użytkowników (UGC)',
-    'Kulturalne',
-    'Wizualne',
-    'Personalne / Zakulisowe',
-    'Interaktywne',
-    'Aktualności / Informacyjne',
+    'Edukacyjne', 'Rozrywkowe', 'Inspirujące', 'Promocyjne', 
+    'Użytkowników (UGC)', 'Kulturalne', 'Wizualne', 
+    'Personalne / Zakulisowe', 'Interaktywne', 'Aktualności / Informacyjne'
   ];
 
   const resetForm = () => {
@@ -34,6 +28,7 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
     setContent('');
     setCategory('');
     setFile(null);
+    setCustomFileName('');
   };
 
   const handleAddPost = async () => {
@@ -54,7 +49,6 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
 
     try {
       const fileData = file ? await processFile(file) : undefined;
-
       await AddPostService.createPost({ title, content, category, file: fileData }, token);
       resetForm();
       onPostAdded();
@@ -68,7 +62,7 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
     const arrayBuffer = await file.arrayBuffer();
     const base64String = arrayBufferToBase64(arrayBuffer);
     return {
-      fileName: file.name,
+      fileName: customFileName || file.name,
       fileType: file.type,
       fileContent: base64String,
     };
@@ -136,6 +130,19 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
             onChange={handleFileChange}
           />
         </div>
+        {file && (
+          <div className="mb-3">
+            <label htmlFor="customFileName" className="form-label">Nazwa pliku</label>
+            <input
+              type="text"
+              className="form-control"
+              id="customFileName"
+              placeholder="Podaj nazwę pliku"
+              value={customFileName}
+              onChange={(e) => setCustomFileName(e.target.value)}
+            />
+          </div>
+        )}
         {file && (
           <div className="mb-3">
             <label className="form-label">Podgląd pliku</label>
