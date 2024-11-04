@@ -5,6 +5,7 @@ import AddPostComponent from '../common/AddPostComponent';
 import FilterComponent from '../common/FilterComponent';
 import { useAuth } from '../../components/common/AuthContext';
 import '../../style/homeStyle.css';
+import AnimatedBanner from '../common/AnimatedBaner';
 
 /**
  * Komponent reprezentujący stronę główną aplikacji.
@@ -32,29 +33,27 @@ function Home() {
   return (
     <React.Fragment>
       <div className="container mt-3 home-container">
-        <div className="row">
-          {/* Kolumna filtra, widoczna tylko na desktopie */}
-          <div className="col-md-3 d-none d-md-block filter-column">
+        {/* Filtr na desktopie pozycjonowany absolutnie, a na mobile pod AddPostComponent */}
+        <div className="filter-column d-none d-md-block">
+          <FilterComponent onFilterChange={handleFilterChange} />
+        </div>
+
+        <div className="row main-content">
+          <div className="col-12 mb-3">
+            {user ? (
+              <AddPostComponent onPostAdded={handlePostAdded} />
+            ) : (
+              <AnimatedBanner />
+            )}
+          </div>
+
+          {/* Filtr na wersji mobilnej */}
+          <div className="col-12 d-md-none mb-3">
             <FilterComponent onFilterChange={handleFilterChange} />
           </div>
 
-          {/* Główna kolumna postów */}
-          <div className="col-12 col-md-9 main-column">
-            {/* Dodaj post lub komunikat dla niezalogowanych */}
-            <div className="mb-3">
-              {user ? (
-                <AddPostComponent onPostAdded={handlePostAdded} />
-              ) : (
-                <h1 className="text-center">Zaloguj się, aby dodać post / Reklama</h1>
-              )}
-            </div>
-
-            {/* Filtry na wersji mobilnej, pod AddPostComponent */}
-            <div className="d-md-none mb-3">
-              <FilterComponent onFilterChange={handleFilterChange} />
-            </div>
-
-            {/* Lista postów */}
+          {/* Lista postów */}
+          <div className="col-12">
             <PostComponent
               key={updatePosts ? 'updatePostsKey' : null}
               filter={filter}
