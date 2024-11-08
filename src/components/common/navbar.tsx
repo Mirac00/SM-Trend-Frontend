@@ -7,51 +7,14 @@ import Modal from 'react-modal';
 import Login from './Login';
 import Register from './Register';
 import { useAuth } from '../../components/common/AuthContext';
-import { UserService } from '../../services/UserService';
 
 const Navbar: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState<'login' | 'register'>('login');
-  const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
-  const { user, setUser } = useAuth(); // Używamy AuthContext
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const jwt = window.localStorage.getItem('jwt');
-      const loggedOut = window.localStorage.getItem('loggedOut') === 'true';
-
-      if (!jwt) {
-        setUser(null);
-        if (!loggedOut) {
-          // Sesja mogła wygasnąć wcześniej, ale AuthProvider obsłużył alert
-        } else {
-          // Użytkownik wylogował się ręcznie
-          window.localStorage.removeItem('loggedOut'); // Usuwamy flagę po wylogowaniu
-        }
-      } else {
-        const fetchedUser = await UserService.getUserByToken(jwt);
-        if (fetchedUser) {
-          setUser(fetchedUser);
-          window.localStorage.removeItem('loggedOut'); // Usuwamy flagę po zalogowaniu
-        } else {
-          setUser(null);
-          // Token jest nieprawidłowy lub wygasł; AuthProvider już obsłużył alert
-        }
-      }
-      setIsLoading(false);
-    };
-
-    checkUser();
-
-    window.addEventListener('storage', checkUser);
-
-    return () => {
-      window.removeEventListener('storage', checkUser);
-    };
-  }, [setUser]);
+  const { user, logout } = useAuth(); // Pobieramy `logout` z kontekstu
 
   useEffect(() => {
     const checkScroll = () => {
@@ -77,13 +40,6 @@ const Navbar: React.FC = () => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    window.localStorage.removeItem('jwt');
-    window.localStorage.setItem('loggedOut', 'true'); // Ustawiamy flagę, że użytkownik wylogował się ręcznie
-    setUser(null);
-    window.dispatchEvent(new Event('storage'));
-  };
-
   const closeModal = () => {
     setIsModalOpen(false);
   };
@@ -91,10 +47,6 @@ const Navbar: React.FC = () => {
   const handleMenuToggle = () => {
     setIsMenuOpen(!isMenuOpen);
   };
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <nav className={`navbar navbar-expand-lg navbar-light sticky-top${isScrolled || isMenuOpen ? ' scrolled' : ''}`}>
@@ -108,7 +60,7 @@ const Navbar: React.FC = () => {
               <span className={`d-flex align-items-center fs-5 me-3 navbar-text${isScrolled ? ' text-scrolled' : ''}`}>
                 Witaj: {user.username}
               </span>
-              <button className={`btn-user navbar-btn${isScrolled ? ' btn-scrolled' : ''}`} onClick={handleLogout}>
+              <button className={`btn-user navbar-btn${isScrolled ? ' btn-scrolled' : ''}`} onClick={logout}>
                 Wyloguj
               </button>
             </>

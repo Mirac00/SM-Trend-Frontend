@@ -9,6 +9,7 @@ import LikeDislikeComponent from './LikeDislikeComponent';
 import { PostService } from '../../services/PostService';
 import '../../style/PostComponent.css';
 import EditPostModal from './EditPostModal';
+import { useAuth } from '../../components/common/AuthContext'; // Importuj useAuth
 
 interface PostComponentProps {
   filter: {
@@ -38,7 +39,8 @@ const PostComponent: React.FC<PostComponentProps> = ({
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [fileUrls, setFileUrls] = useState<{ [key: number]: string }>({});
-  const isLoggedIn = !!window.localStorage.getItem('jwt');
+  const { user } = useAuth(); // Pobierz użytkownika z kontekstu
+  const isLoggedIn = !!user; // Sprawdź, czy użytkownik jest zalogowany
 
   useEffect(() => {
     Modal.setAppElement('#root');

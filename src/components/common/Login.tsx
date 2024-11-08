@@ -19,13 +19,27 @@ const Login: React.FC<LoginProps> = ({ closeModal }) => {
       Password: password,
     };
 
-    const user: User | null = await UserService.authenticate(request);
+    try {
+      const response = await UserService.authenticate(request);
 
-    if (user) {
-      setUser(user); // Aktualizujemy stan użytkownika
-      closeModal();
-    } else {
-      alert('Nieprawidłowy login lub hasło');
+      if (response && response.user && response.token) {
+        const { user, token } = response;
+
+        // Łączymy użytkownika z tokenem
+        const userWithToken: User = { ...user, token };
+
+        // Zapisujemy token w localStorage
+        localStorage.setItem('jwt', token);
+        window.dispatchEvent(new Event('storage')); // Powiadamiamy AuthContext
+
+        setUser(userWithToken); // Aktualizujemy stan użytkownika
+        closeModal();
+      } else {
+        alert('Nieprawidłowy login lub hasło');
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+      alert('Wystąpił błąd podczas logowania');
     }
   };
 

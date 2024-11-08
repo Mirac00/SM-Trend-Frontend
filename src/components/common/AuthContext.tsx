@@ -7,18 +7,20 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 interface AuthContextProps {
   user: User | null;
   setUser: (user: User | null) => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextProps>({
   user: null,
   setUser: () => {},
+  logout: () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [showSessionExpired, setShowSessionExpired] = useState(false);
-  const isRefreshingRef = useRef(false); // Ref zamiast useState dla flagi odświeżania
+  const isRefreshingRef = useRef(false);
 
   const decodeToken = (token: string) => {
     try {
@@ -31,12 +33,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const handleSetUser = (newUser: User | null) => {
+    setUser(newUser);
+    if (newUser && newUser.token) {
+      window.localStorage.setItem('jwt', newUser.token);
+    } else {
+      window.localStorage.removeItem('jwt');
+    }
+    window.dispatchEvent(new Event('storage')); // Powiadomienie innych zakładek
+  };
+
   const handleLogout = useCallback(() => {
     console.log('Session expired, logging out and showing alert');
-    window.localStorage.removeItem('jwt');
-    setUser(null);
+    handleSetUser(null);
     setShowSessionExpired(true);
-    window.dispatchEvent(new Event('storage'));
+  }, []);
+
+  const logout = useCallback(() => {
+    console.log('User logged out manually');
+    handleSetUser(null);
+    // Nie pokazujemy alertu o wygaśnięciu sesji
   }, []);
 
   const refreshToken = useCallback(async () => {
@@ -52,20 +68,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newToken = await UserService.refreshToken();
       console.log('New token received:', newToken);
       if (newToken) {
-        localStorage.setItem('jwt', newToken);
-        window.dispatchEvent(new Event('storage'));
-
+        window.localStorage.setItem('jwt', newToken);
         const fetchedUser = await UserService.getUserByToken(newToken);
-        setUser(fetchedUser);
-        console.log('User fetched after refresh:', fetchedUser);
+        if (fetchedUser) {
+          fetchedUser.token = newToken; // Ustaw nowy token
+          setUser(fetchedUser);
+          console.log('User fetched after refresh:', fetchedUser);
 
-        const decoded: any = decodeToken(newToken);
-        if (decoded && decoded.exp * 1000 > Date.now()) {
-          const timeout = decoded.exp * 1000 - Date.now();
-          console.log('Setting new logout timer for:', timeout, 'ms');
-          if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+          const decoded: any = decodeToken(newToken);
+          if (decoded && decoded.exp * 1000 > Date.now()) {
+            const timeout = decoded.exp * 1000 - Date.now();
+            console.log('Setting new logout timer for:', timeout, 'ms');
+            if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
 
-          logoutTimerRef.current = setTimeout(() => handleLogout(), timeout);
+            logoutTimerRef.current = setTimeout(() => handleLogout(), timeout);
+          }
+        } else {
+          handleLogout();
         }
       }
     } catch (error) {
@@ -84,13 +103,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (decoded && decoded.exp * 1000 > Date.now()) {
         const fetchedUser = await UserService.getUserByToken(jwt);
         console.log('User fetched on initial check:', fetchedUser);
-        setUser(fetchedUser);
+        if (fetchedUser) {
+          fetchedUser.token = jwt;
+          setUser(fetchedUser);
 
-        const timeout = decoded.exp * 1000 - Date.now();
-        console.log('Setting logout timer for:', timeout, 'ms');
-        if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+          const timeout = decoded.exp * 1000 - Date.now();
+          console.log('Setting logout timer for:', timeout, 'ms');
+          if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
 
-        logoutTimerRef.current = setTimeout(() => handleLogout(), timeout);
+          logoutTimerRef.current = setTimeout(() => handleLogout(), timeout);
+        } else {
+          handleLogout();
+        }
       } else {
         handleLogout();
       }
@@ -120,15 +144,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const handleActivity = () => {
       console.log('User activity detected');
-      const jwt = window.localStorage.getItem('jwt');
-      if (jwt) {
-        const decoded: any = decodeToken(jwt);
+      const token = user.token;
+      if (token) {
+        const decoded: any = decodeToken(token);
         if (decoded) {
           const remainingTime = decoded.exp * 1000 - Date.now();
           console.log('Remaining time:', remainingTime, 'ms');
 
           // Aktywuj czujkę tylko jeśli token wygasa w ciągu 15 minut lub mniej
-          if (remainingTime <= 15 * 60 * 1000 && remainingTime > 0) { // <= 15 minut
+          if (remainingTime <= 15 * 60 * 1000 && remainingTime > 0) {
             console.log('Remaining time <= 15 minutes, attempting to refresh token');
             refreshToken();
           }
@@ -159,7 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [refreshToken, user]);
 
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
+    <AuthContext.Provider value={{ user, setUser: handleSetUser, logout }}>
       {children}
       {showSessionExpired && (
         <div

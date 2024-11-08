@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AddPostService } from '../../services/AddPostService';
 import '../../style/AddPostComponent.css';
+import { useAuth } from '../../components/common/AuthContext';
 
 interface AddPostComponentProps {
   onPostAdded: () => void;
@@ -14,12 +15,13 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
   const [file, setFile] = useState<File | null>(null);
   const [customFileName, setCustomFileName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const token = window.localStorage.getItem('jwt');
   const navigate = useNavigate();
+  const { user } = useAuth(); // Pobierz użytkownika z kontekstu
+  const isLoggedIn = !!user;
 
   const categories = [
-    'Edukacyjne', 'Rozrywkowe', 'Inspirujące', 'Promocyjne', 
-    'Użytkowników (UGC)', 'Kulturalne', 'Wizualne', 
+    'Edukacyjne', 'Rozrywkowe', 'Inspirujące', 'Promocyjne',
+    'Użytkowników (UGC)', 'Kulturalne', 'Wizualne',
     'Personalne / Zakulisowe', 'Interaktywne', 'Aktualności / Informacyjne'
   ];
 
@@ -32,7 +34,7 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
   };
 
   const handleAddPost = async () => {
-    if (!token) {
+    if (!isLoggedIn || !user) {
       setErrorMessage('Zaloguj się, aby dodać post.');
       return;
     }
@@ -49,12 +51,12 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
 
     try {
       const fileData = file ? await processFile(file) : undefined;
-      await AddPostService.createPost({ title, content, category, file: fileData }, token);
+      await AddPostService.createPost({ title, content, category, file: fileData }, user.token);
       resetForm();
       onPostAdded();
     } catch (error) {
       console.error('Error adding post:', error);
-      setErrorMessage('Error adding post');
+      setErrorMessage('Wystąpił błąd podczas dodawania posta.');
     }
   };
 

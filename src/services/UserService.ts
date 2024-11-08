@@ -41,18 +41,13 @@ export const UserService = {
    * @param request Obiekt zawierający nazwę użytkownika i hasło.
    * @returns Obiekt użytkownika lub null, jeśli uwierzytelnianie się nie powiodło.
    */
-  async authenticate(request: AuthenticateRequest): Promise<User | null> {
+  async authenticate(request: AuthenticateRequest): Promise<{ user: User; token: string } | null> {
     try {
       console.log('Sending authenticate request with:', request);
-      const response = await axios.post<User>(`${API_URL}/authenticate`, request);
-      const user = response.data;
+      const response = await axios.post<{ user: User; token: string }>(`${API_URL}/authenticate`, request);
 
-      // Zapisujemy token w localStorage
-      localStorage.setItem('jwt', user.token);
-      window.dispatchEvent(new Event('storage')); // Powiadamiamy AuthContext
-
-      console.log('User authenticated:', user);
-      return user;
+      console.log('User authenticated:', response.data);
+      return response.data;
     } catch (error) {
       console.error('Błąd podczas uwierzytelniania:', error);
       return null;
