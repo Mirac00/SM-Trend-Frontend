@@ -6,7 +6,7 @@ import '../../style/navbarStyle.css';
 import Modal from 'react-modal';
 import Login from './Login';
 import Register from './Register';
-import { useAuth } from '../../components/common/AuthContext';
+import { useAuth } from '../../components/common/AuthContext'; // Upewnij się, że ścieżka jest poprawna
 
 const Navbar: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);

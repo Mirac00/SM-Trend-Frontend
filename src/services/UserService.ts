@@ -41,13 +41,14 @@ export const UserService = {
    * @param request Obiekt zawierający nazwę użytkownika i hasło.
    * @returns Obiekt użytkownika lub null, jeśli uwierzytelnianie się nie powiodło.
    */
-  async authenticate(request: AuthenticateRequest): Promise<{ user: User; token: string } | null> {
+  async authenticate(request: AuthenticateRequest): Promise<User | null> {
     try {
       console.log('Sending authenticate request with:', request);
-      const response = await axios.post<{ user: User; token: string }>(`${API_URL}/authenticate`, request);
+      const response = await axios.post<User>(`${API_URL}/authenticate`, request);
+      const user = response.data;
 
-      console.log('User authenticated:', response.data);
-      return response.data;
+      console.log('User authenticated:', user);
+      return user;
     } catch (error) {
       console.error('Błąd podczas uwierzytelniania:', error);
       return null;

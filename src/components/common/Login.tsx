@@ -1,8 +1,9 @@
+// src/components/common/Login.tsx
 import React, { useState } from 'react';
 import { User } from '../../models/User';
 import { AuthenticateRequest } from '../../models/AuthenticateRequest';
 import { UserService } from '../../services/UserService';
-import { useAuth } from '../../components/common/AuthContext';
+import { useAuth } from '../../components/common/AuthContext'; // Upewnij się, że ścieżka jest poprawna
 
 interface LoginProps {
   closeModal: () => void;
@@ -20,19 +21,10 @@ const Login: React.FC<LoginProps> = ({ closeModal }) => {
     };
 
     try {
-      const response = await UserService.authenticate(request);
+      const user: User | null = await UserService.authenticate(request);
 
-      if (response && response.user && response.token) {
-        const { user, token } = response;
-
-        // Łączymy użytkownika z tokenem
-        const userWithToken: User = { ...user, token };
-
-        // Zapisujemy token w localStorage
-        localStorage.setItem('jwt', token);
-        window.dispatchEvent(new Event('storage')); // Powiadamiamy AuthContext
-
-        setUser(userWithToken); // Aktualizujemy stan użytkownika
+      if (user && user.token) {
+        setUser(user); // Aktualizujemy stan użytkownika i zapisujemy token w AuthProvider
         closeModal();
       } else {
         alert('Nieprawidłowy login lub hasło');

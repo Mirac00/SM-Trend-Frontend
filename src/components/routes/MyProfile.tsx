@@ -1,4 +1,4 @@
-// MyProfile.tsx
+// src/components/common/MyProfile.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../components/common/AuthContext'; // Upewnij się, że ścieżka jest poprawna
 import { PostService } from '../../services/PostService';
@@ -15,10 +15,22 @@ const MyProfile: React.FC = () => {
   const [filter, setFilter] = useState({ fileType: '', searchTerm: '', sortOption: 'latest' }); // Dodany sortOption
   const navigate = useNavigate(); // Inicjalizacja useNavigate
 
+  // Lokalny stan dla formularza aktualizacji profilu
+  const [updatedUsername, setUpdatedUsername] = useState(user?.username || '');
+  const [updatedFirstName, setUpdatedFirstName] = useState(user?.firstName || '');
+  const [updatedLastName, setUpdatedLastName] = useState(user?.lastName || '');
+  const [updatedPassword, setUpdatedPassword] = useState('');
+
   useEffect(() => {
     if (!user) {
       // Jeśli użytkownik nie jest zalogowany, przekieruj na stronę główną
       navigate('/');
+    } else {
+      // Inicjalizacja lokalnych stanów po zalogowaniu
+      setUpdatedUsername(user.username);
+      setUpdatedFirstName(user.firstName);
+      setUpdatedLastName(user.lastName);
+      setUpdatedPassword('');
     }
   }, [user, navigate]);
 
@@ -46,8 +58,15 @@ const MyProfile: React.FC = () => {
 
   const handleUpdateProfile = async (updatedUser: Partial<User>) => {
     if (user) {
-      await UserService.updateProfile(user.id, updatedUser);
-      setUser({ ...user, ...updatedUser });
+      try {
+        await UserService.updateProfile(user.id, updatedUser);
+        // Aktualizacja stanu użytkownika w kontekście
+        setUser({ ...user, ...updatedUser });
+        alert('Profil został zaktualizowany pomyślnie!');
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        alert('Wystąpił błąd podczas aktualizacji profilu.');
+      }
     }
   };
 
@@ -69,15 +88,21 @@ const MyProfile: React.FC = () => {
       <h2 className="mt-2 text-success">Mój Profil</h2>
       <div className="profile-section">
         <h3>Aktualizuj swoje dane</h3>
-        <form onSubmit={(e) => { e.preventDefault(); handleUpdateProfile({ ...user }); }}>
+        <form onSubmit={(e) => { e.preventDefault(); handleUpdateProfile({
+          username: updatedUsername,
+          firstName: updatedFirstName,
+          lastName: updatedLastName,
+          password: updatedPassword
+        }); }}>
           <div className="mb-3">
             <label htmlFor="username" className="form-label">Username</label>
             <input
               type="text"
               id="username"
               className="form-control"
-              value={user.username}
-              onChange={(e) => setUser({ ...user, username: e.target.value })}
+              value={updatedUsername}
+              onChange={(e) => setUpdatedUsername(e.target.value)}
+              required
             />
           </div>
           <div className="mb-3">
@@ -86,8 +111,9 @@ const MyProfile: React.FC = () => {
               type="text"
               id="firstName"
               className="form-control"
-              value={user.firstName}
-              onChange={(e) => setUser({ ...user, firstName: e.target.value })}
+              value={updatedFirstName}
+              onChange={(e) => setUpdatedFirstName(e.target.value)}
+              required
             />
           </div>
           <div className="mb-3">
@@ -96,8 +122,9 @@ const MyProfile: React.FC = () => {
               type="text"
               id="lastName"
               className="form-control"
-              value={user.lastName}
-              onChange={(e) => setUser({ ...user, lastName: e.target.value })}
+              value={updatedLastName}
+              onChange={(e) => setUpdatedLastName(e.target.value)}
+              required
             />
           </div>
           <div className="mb-3">
@@ -107,7 +134,9 @@ const MyProfile: React.FC = () => {
               id="password"
               className="form-control"
               autoComplete="current-password"
-              onChange={(e) => setUser({ ...user, password: e.target.value })}
+              value={updatedPassword}
+              onChange={(e) => setUpdatedPassword(e.target.value)}
+              placeholder="Nowe hasło"
             />
           </div>
           <button type="submit" className="btn btn-primary">Aktualizuj</button>
