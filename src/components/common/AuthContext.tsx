@@ -1,12 +1,5 @@
-// src/contexts/auth/AuthProvider.tsx
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-} from 'react';
+// AuthProvider.tsx
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User } from '../../models/User';
 import { UserService } from '../../services/UserService';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -23,16 +16,11 @@ const AuthContext = createContext<AuthContextProps>({
   logout: () => {},
 });
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [showSessionExpired, setShowSessionExpired] = useState(false);
   const isRefreshingRef = useRef(false);
-  const [tokenRefreshCheckFlag, setTokenRefreshCheckFlag] = useState(false);
-  const activityListenersRef = useRef(false);
-  const activityCleanupRef = useRef<() => void>(() => {});
 
   const decodeToken = (token: string) => {
     try {
@@ -43,15 +31,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error('Invalid token:', e);
       return null;
     }
-  };
-
-  const formatTime = (milliseconds: number) => {
-    let totalSeconds = Math.floor(milliseconds / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    totalSeconds %= 3600;
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${hours}h ${minutes}m ${seconds}s`;
   };
 
   const handleSetUser = (newUser: User | null) => {
@@ -89,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const newToken = await UserService.refreshToken();
       console.log('New token received:', newToken);
       if (newToken) {
-        handleSetUser({ ...user!, token: newToken }); // Aktualizujemy użytkownika z nowym tokenem
+        window.localStorage.setItem('jwt', newToken);
         const fetchedUser = await UserService.getUserByToken(newToken);
         if (fetchedUser) {
           fetchedUser.token = newToken; // Ustaw nowy token
@@ -99,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           const decoded: any = decodeToken(newToken);
           if (decoded && decoded.exp * 1000 > Date.now()) {
             const timeout = decoded.exp * 1000 - Date.now();
-            console.log('Setting new logout timer for:', formatTime(timeout));
+            console.log('Setting new logout timer for:', timeout, 'ms');
             if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
 
             logoutTimerRef.current = setTimeout(() => handleLogout(), timeout);
@@ -114,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       isRefreshingRef.current = false;
     }
-  }, [handleLogout, user]);
+  }, [handleLogout]);
 
   const checkUser = useCallback(async () => {
     const jwt = window.localStorage.getItem('jwt');
@@ -129,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setUser(fetchedUser);
 
           const timeout = decoded.exp * 1000 - Date.now();
-          console.log('Setting logout timer for:', formatTime(timeout));
+          console.log('Setting logout timer for:', timeout, 'ms');
           if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
 
           logoutTimerRef.current = setTimeout(() => handleLogout(), timeout);
@@ -144,18 +123,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [handleLogout]);
 
-  const getRemainingTime = () => {
-    if (!user || !user.token) {
-      return 0;
-    }
-    const token = user.token;
-    const decoded: any = decodeToken(token);
-    if (!decoded) {
-      return 0;
-    }
-    return decoded.exp * 1000 - Date.now();
-  };
-
   useEffect(() => {
     checkUser();
 
@@ -168,71 +135,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [checkUser]);
 
   useEffect(() => {
-    if (!user || !user.token) {
-      // Remove activity listeners if any
-      if (activityCleanupRef.current) {
-        activityCleanupRef.current();
-      }
+    if (!user) {
+      // Jeśli użytkownik nie jest zalogowany, nie ustawiaj czujki
       return;
     }
-
-    const remainingTime = getRemainingTime();
-
-    if (remainingTime <= 0) {
-      handleLogout();
-      return;
-    }
-
-    const fifteenMinutes = 15 * 60 * 1000;
-
-    console.log('Remaining time:', formatTime(remainingTime));
-
-    if (remainingTime <= fifteenMinutes) {
-      // Remaining time is less than or equal to 15 minutes, add activity listeners if not already added
-      if (!activityListenersRef.current) {
-        setupActivityListeners();
-      }
-    } else {
-      // Remaining time is more than 15 minutes, remove activity listeners if they were added
-      if (activityListenersRef.current && activityCleanupRef.current) {
-        activityCleanupRef.current();
-      }
-
-      // Schedule a timeout to re-run this effect when remaining time reaches 15 minutes
-      const timeUntil15Minutes = remainingTime - fifteenMinutes;
-      console.log(
-        'Scheduling re-check in:',
-        formatTime(timeUntil15Minutes)
-      );
-
-      const timerId = setTimeout(() => {
-        // Force re-run of this effect
-        setTokenRefreshCheckFlag((prev) => !prev);
-      }, timeUntil15Minutes);
-
-      return () => {
-        clearTimeout(timerId);
-      };
-    }
-  }, [user, tokenRefreshCheckFlag, handleLogout]);
-
-  const setupActivityListeners = () => {
-    activityListenersRef.current = true;
 
     let activityTimeout: NodeJS.Timeout;
 
     const handleActivity = () => {
       console.log('User activity detected');
-      const remainingTime = getRemainingTime();
-      console.log('Remaining time:', formatTime(remainingTime));
+      const token = user.token;
+      if (token) {
+        const decoded: any = decodeToken(token);
+        if (decoded) {
+          const remainingTime = decoded.exp * 1000 - Date.now();
+          console.log('Remaining time:', remainingTime, 'ms');
 
-      const fifteenMinutes = 15 * 60 * 1000;
-
-      if (remainingTime <= fifteenMinutes && remainingTime > 0) {
-        console.log(
-          'Remaining time <= 15 minutes, attempting to refresh token'
-        );
-        refreshToken();
+          // Aktywuj czujkę tylko jeśli token wygasa w ciągu 15 minut lub mniej
+          if (remainingTime <= 15 * 60 * 1000 && remainingTime > 0) {
+            console.log('Remaining time <= 15 minutes, attempting to refresh token');
+            refreshToken();
+          }
+        }
       }
     };
 
@@ -249,27 +173,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     console.log('Activity listeners added');
 
-    // Cleanup function
-    const cleanup = () => {
+    return () => {
       window.removeEventListener('mousemove', debounceActivity);
       window.removeEventListener('click', debounceActivity);
       window.removeEventListener('keydown', debounceActivity);
       clearTimeout(activityTimeout);
-      activityListenersRef.current = false;
       console.log('Activity listeners removed');
     };
-
-    activityCleanupRef.current = cleanup;
-  };
-
-  useEffect(() => {
-    return () => {
-      // On unmount or user change, remove activity listeners if they were added
-      if (activityCleanupRef.current) {
-        activityCleanupRef.current();
-      }
-    };
-  }, [user]);
+  }, [refreshToken, user]);
 
   return (
     <AuthContext.Provider value={{ user, setUser: handleSetUser, logout }}>
