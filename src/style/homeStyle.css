@@ -1,32 +1,19 @@
-.Home {
-    background-color: green;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-  }
-/* Stylizacja głównego kontenera i kolumny filtrów */
+/* Stylizacja kolumn dla wersji desktopowej */
 .filter-column {
-  position: fixed;
-  top: 50%;
-  left: 20px;
   width: 20%;
   box-shadow: 0 0 10px blueviolet;
   padding: 10px;
+  height: fit-content;
 }
 
-.main-column {
-  margin-left: 25%; /* Dostosowanie odstępu dla głównej kolumny na desktopie */
+.post-column {
+  width: 80%;
 }
 
+/* Opcjonalne dostosowanie dla wersji mobilnej */
 @media (max-width: 768px) {
-  .filter-column {
-    position: static;
+  .filter-column,
+  .post-column {
     width: 100%;
-  }
-
-  .main-column {
-    margin-left: 0;
   }
 }

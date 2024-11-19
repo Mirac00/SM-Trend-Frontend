@@ -32,28 +32,27 @@ function Home() {
 
   return (
     <React.Fragment>
-      <div className="container mt-3 home-container">
-        {/* Filtr na desktopie pozycjonowany absolutnie, a na mobile pod AddPostComponent */}
-        <div className="filter-column d-none d-md-block">
+    <div className="container mt-3 home-container">
+      <div className="row main-content">
+        <div className="col-12 mb-3">
+          {user ? (
+            <AddPostComponent onPostAdded={handlePostAdded} />
+          ) : (
+            <AnimatedBanner />
+          )}
+        </div>
+
+        {/* Filtr na wersji mobilnej */}
+        <div className="col-12 d-md-none mb-3">
           <FilterComponent onFilterChange={handleFilterChange} />
         </div>
 
-        <div className="row main-content">
-          <div className="col-12 mb-3">
-            {user ? (
-              <AddPostComponent onPostAdded={handlePostAdded} />
-            ) : (
-              <AnimatedBanner />
-            )}
-          </div>
-
-          {/* Filtr na wersji mobilnej */}
-          <div className="col-12 d-md-none mb-3">
+        {/* Filtr i posty na wersji desktopowej */}
+        <div className="col-12 d-none d-md-flex">
+          <div className="filter-column">
             <FilterComponent onFilterChange={handleFilterChange} />
           </div>
-
-          {/* Lista postów */}
-          <div className="col-12">
+          <div className="post-column">
             <PostComponent
               key={updatePosts ? 'updatePostsKey' : null}
               filter={filter}
@@ -61,8 +60,18 @@ function Home() {
             />
           </div>
         </div>
+
+        {/* Lista postów na wersji mobilnej */}
+        <div className="col-12 d-md-none">
+          <PostComponent
+            key={updatePosts ? 'updatePostsKey' : null}
+            filter={filter}
+            userId={user?.id}
+          />
+        </div>
       </div>
-    </React.Fragment>
+    </div>
+  </React.Fragment>
   );
 }
 
