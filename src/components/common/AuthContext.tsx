@@ -1,59 +1,39 @@
-// AuthProvider.tsx
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+// AuthContext.tsx
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { User } from '../../models/User';
 import { UserService } from '../../services/UserService';
-import 'bootstrap/dist/css/bootstrap.min.css';
 
 interface AuthContextProps {
   user: User | null;
   setUser: (user: User | null) => void;
   logout: () => void;
+  refreshToken: () => void;
+  isWatcherActive: boolean; // Czy czujka powinna być aktywna
 }
 
-const AuthContext = createContext<AuthContextProps>({
+export const AuthContext = createContext<AuthContextProps>({
   user: null,
   setUser: () => {},
   logout: () => {},
+  refreshToken: () => {},
+  isWatcherActive: false,
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [showSessionExpired, setShowSessionExpired] = useState(false);
+  const [isWatcherActive, setIsWatcherActive] = useState(false); // Czujka aktywna w ostatnich 15 minutach
   const isRefreshingRef = useRef(false);
+  const logoutTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const decodeToken = (token: string) => {
     try {
       const payload = token.split('.')[1];
-      const decoded = JSON.parse(atob(payload));
-      return decoded;
+      return JSON.parse(atob(payload));
     } catch (e) {
       console.error('Invalid token:', e);
       return null;
     }
   };
-
-  const handleSetUser = (newUser: User | null) => {
-    setUser(newUser);
-    if (newUser && newUser.token) {
-      window.localStorage.setItem('jwt', newUser.token);
-    } else {
-      window.localStorage.removeItem('jwt');
-    }
-    window.dispatchEvent(new Event('storage')); // Powiadomienie innych zakładek
-  };
-
-  const handleLogout = useCallback(() => {
-    console.log('Session expired, logging out and showing alert');
-    handleSetUser(null);
-    setShowSessionExpired(true);
-  }, []);
-
-  const logout = useCallback(() => {
-    console.log('User logged out manually');
-    handleSetUser(null);
-    // Nie pokazujemy alertu o wygaśnięciu sesji
-  }, []);
 
   const refreshToken = useCallback(async () => {
     if (isRefreshingRef.current) {
@@ -62,150 +42,102 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     isRefreshingRef.current = true;
-    console.log('Attempting to refresh token');
 
     try {
       const newToken = await UserService.refreshToken();
       console.log('New token received:', newToken);
+
       if (newToken) {
-        window.localStorage.setItem('jwt', newToken);
         const fetchedUser = await UserService.getUserByToken(newToken);
         if (fetchedUser) {
-          fetchedUser.token = newToken; // Ustaw nowy token
+          fetchedUser.token = newToken;
           setUser(fetchedUser);
-          console.log('User fetched after refresh:', fetchedUser);
 
+          // Po odświeżeniu tokena aktualizujemy czujkę
           const decoded: any = decodeToken(newToken);
-          if (decoded && decoded.exp * 1000 > Date.now()) {
-            const timeout = decoded.exp * 1000 - Date.now();
-            console.log('Setting new logout timer for:', timeout, 'ms');
-            if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+          if (decoded) {
+            const remainingTimeMs = decoded.exp * 1000 - Date.now();
+            console.log(`Pozostały czas sesji po odświeżeniu: ${Math.floor(remainingTimeMs / 1000)}s`);
 
-            logoutTimerRef.current = setTimeout(() => handleLogout(), timeout);
+            setIsWatcherActive(false); // Wyłącz czujkę po odświeżeniu tokena
+            if (remainingTimeMs <= 15 * 60 * 1000) {
+              console.log('Czujka pozostanie aktywna, bo nowy token ma mniej niż 15 minut ważności.');
+              setIsWatcherActive(true);
+            }
           }
-        } else {
-          handleLogout();
         }
       }
     } catch (error) {
       console.error('Error refreshing token:', error);
-      handleLogout();
     } finally {
       isRefreshingRef.current = false;
     }
-  }, [handleLogout]);
+  }, []);
 
-  const checkUser = useCallback(async () => {
-    const jwt = window.localStorage.getItem('jwt');
-    console.log('Checking user with token:', jwt);
-    if (jwt) {
-      const decoded: any = decodeToken(jwt);
-      if (decoded && decoded.exp * 1000 > Date.now()) {
-        const fetchedUser = await UserService.getUserByToken(jwt);
-        console.log('User fetched on initial check:', fetchedUser);
-        if (fetchedUser) {
-          fetchedUser.token = jwt;
-          setUser(fetchedUser);
+  const checkRemainingTime = useCallback(() => {
+    const token = user?.token;
+    if (!token) return;
 
-          const timeout = decoded.exp * 1000 - Date.now();
-          console.log('Setting logout timer for:', timeout, 'ms');
-          if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+    const decoded: any = decodeToken(token);
+    if (!decoded) return;
 
-          logoutTimerRef.current = setTimeout(() => handleLogout(), timeout);
-        } else {
-          handleLogout();
-        }
-      } else {
-        handleLogout();
-      }
-    } else {
+    const remainingTimeMs = decoded.exp * 1000 - Date.now();
+
+    if (remainingTimeMs <= 0) {
+      console.log('Session expired');
       setUser(null);
-    }
-  }, [handleLogout]);
-
-  useEffect(() => {
-    checkUser();
-
-    window.addEventListener('storage', checkUser);
-
-    return () => {
-      window.removeEventListener('storage', checkUser);
-      if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
-    };
-  }, [checkUser]);
-
-  useEffect(() => {
-    if (!user) {
-      // Jeśli użytkownik nie jest zalogowany, nie ustawiaj czujki
-      return;
+    } else if (remainingTimeMs <= 15 * 60 * 1000 && !isWatcherActive) {
+      console.log('Czujka aktywna: Pozostało 15 minut lub mniej do wygaśnięcia tokena.');
+      setIsWatcherActive(true);
+    } else if (remainingTimeMs > 15 * 60 * 1000 && isWatcherActive) {
+      console.log('Czujka wyłączona: Pozostało więcej niż 15 minut do wygaśnięcia tokena.');
+      setIsWatcherActive(false);
     }
 
-    let activityTimeout: NodeJS.Timeout;
+    const hours = Math.floor(remainingTimeMs / (1000 * 60 * 60));
+    const minutes = Math.floor((remainingTimeMs % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((remainingTimeMs % (1000 * 60)) / 1000);
+    console.log(`Pozostały czas sesji: ${hours}h ${minutes}m ${seconds}s`);
+  }, [user, isWatcherActive]);
 
-    const handleActivity = () => {
-      console.log('User activity detected');
-      const token = user.token;
-      if (token) {
-        const decoded: any = decodeToken(token);
-        if (decoded) {
-          const remainingTime = decoded.exp * 1000 - Date.now();
-          console.log('Remaining time:', remainingTime, 'ms');
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      checkRemainingTime();
+    }, 10000);
 
-          // Aktywuj czujkę tylko jeśli token wygasa w ciągu 15 minut lub mniej
-          if (remainingTime <= 15 * 60 * 1000 && remainingTime > 0) {
-            console.log('Remaining time <= 15 minutes, attempting to refresh token');
-            refreshToken();
+    return () => clearInterval(intervalId);
+  }, [checkRemainingTime]);
+
+  useEffect(() => {
+    const token = window.localStorage.getItem('jwt');
+    if (token) {
+      const decoded: any = decodeToken(token);
+      if (decoded && decoded.exp * 1000 > Date.now()) {
+        UserService.getUserByToken(token).then((fetchedUser) => {
+          if (fetchedUser) {
+            fetchedUser.token = token;
+            setUser(fetchedUser);
+          } else {
+            setUser(null);
           }
-        }
+        });
+      } else {
+        setUser(null);
       }
-    };
-
-    const debounceActivity = () => {
-      clearTimeout(activityTimeout);
-      activityTimeout = setTimeout(() => {
-        handleActivity();
-      }, 300);
-    };
-
-    window.addEventListener('mousemove', debounceActivity);
-    window.addEventListener('click', debounceActivity);
-    window.addEventListener('keydown', debounceActivity);
-
-    console.log('Activity listeners added');
-
-    return () => {
-      window.removeEventListener('mousemove', debounceActivity);
-      window.removeEventListener('click', debounceActivity);
-      window.removeEventListener('keydown', debounceActivity);
-      clearTimeout(activityTimeout);
-      console.log('Activity listeners removed');
-    };
-  }, [refreshToken, user]);
+    }
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser: handleSetUser, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        setUser,
+        logout: () => setUser(null),
+        refreshToken,
+        isWatcherActive,
+      }}
+    >
       {children}
-      {showSessionExpired && (
-        <div
-          className="alert alert-warning alert-dismissible fade show"
-          role="alert"
-          style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            zIndex: 1050,
-            minWidth: '300px',
-          }}
-        >
-          <strong>Sesja wygasła!</strong> Zaloguj się ponownie, aby kontynuować korzystanie z aplikacji.
-          <button
-            type="button"
-            className="btn-close"
-            aria-label="Close"
-            onClick={() => setShowSessionExpired(false)}
-          ></button>
-        </div>
-      )}
     </AuthContext.Provider>
   );
 };
