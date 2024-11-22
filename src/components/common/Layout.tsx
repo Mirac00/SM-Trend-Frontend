@@ -12,14 +12,14 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { isWatcherActive, refreshToken } = useAuth(); // Pobieramy informacje o czujce i funkcji odświeżania
+  const { isWatcherActive, refreshToken } = useAuth();
 
   useEffect(() => {
-    if (!isWatcherActive) return; // Czujka działa tylko w ostatnich 15 minutach
+    if (!isWatcherActive) return;
 
     const handleActivity = () => {
       console.log('Interaction detected in Layout');
-      refreshToken(); // Odśwież token po interakcji
+      refreshToken();
     };
 
     console.log('Czujka aktywna: Nasłuchiwanie interakcji w Layout');

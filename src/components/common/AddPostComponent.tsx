@@ -63,11 +63,28 @@ function AddPostComponent({ onPostAdded }: AddPostComponentProps) {
   const processFile = async (file: File) => {
     const arrayBuffer = await file.arrayBuffer();
     const base64String = arrayBufferToBase64(arrayBuffer);
+
+    // Generowanie domyślnej nazwy pliku na podstawie typu
+    const defaultFileName = customFileName || getDefaultFileName(file);
+
     return {
-      fileName: customFileName || file.name,
+      fileName: defaultFileName,
       fileType: file.type,
       fileContent: base64String,
     };
+  };
+
+  const getDefaultFileName = (file: File): string => {
+    if (file.type.startsWith('image/')) {
+      return 'Tytuł_obraz';
+    }
+    if (file.type.startsWith('video/')) {
+      return 'Tytuł_wideo';
+    }
+    if (file.type.startsWith('audio/')) {
+      return 'Tytuł_audio';
+    }
+    return 'Tytuł_plik';
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
